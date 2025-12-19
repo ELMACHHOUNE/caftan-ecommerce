@@ -1,0 +1,127 @@
+import Link from "next/link"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+
+export default function CategoriesPage() {
+  const categories = [
+    {
+      id: 1,
+      name: "Rent Caftans",
+      description: "Perfect for special occasions and events",
+      image: "/elegant-moroccan-caftan-rental-event.jpg",
+      link: "/products?type=rent",
+      color: "accent",
+    },
+    {
+      id: 2,
+      name: "Buy Caftans",
+      description: "Own a timeless piece of Moroccan elegance",
+      image: "/moroccan-caftan-purchase-luxury.jpg",
+      link: "/products?type=buy",
+      color: "secondary",
+    },
+    {
+      id: 3,
+      name: "Wedding Collection",
+      description: "Exquisite bridal and ceremonial pieces",
+      image: "/moroccan-wedding-caftan-bridal.jpg",
+      link: "/products?category=wedding",
+      color: "primary",
+    },
+    {
+      id: 4,
+      name: "Traditional",
+      description: "Classic designs honoring heritage",
+      image: "/traditional-moroccan-caftan-classic.jpg",
+      link: "/products?category=traditional",
+      color: "accent",
+    },
+    {
+      id: 5,
+      name: "Modern Luxury",
+      description: "Contemporary elegance meets tradition",
+      image: "/modern-luxury-moroccan-caftan.jpg",
+      link: "/products?category=luxury",
+      color: "secondary",
+    },
+    {
+      id: 6,
+      name: "Premium Collection",
+      description: "Exceptional craftsmanship and rare materials",
+      image: "/premium-moroccan-caftan-gold-embroidery.jpg",
+      link: "/products?category=premium",
+      color: "primary",
+    },
+  ]
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="py-20 bg-gradient-to-br from-primary via-secondary to-accent text-primary-foreground">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+            <h1 className="text-5xl md:text-6xl font-bold text-balance">Browse Categories</h1>
+            <p className="text-xl leading-relaxed opacity-90">
+              Explore our curated collections of authentic Moroccan caftans
+            </p>
+          </div>
+        </section>
+
+        {/* Categories Grid */}
+        <section className="py-20 bg-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.map((category) => (
+                <Card
+                  key={category.id}
+                  className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-2 border-border hover:border-accent"
+                >
+                  <div className="relative h-64 overflow-hidden bg-muted">
+                    <img
+                      src={category.image || "/placeholder.svg"}
+                      alt={category.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-primary-foreground">
+                      <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
+                      <p className="text-sm opacity-90">{category.description}</p>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <Link href={category.link}>
+                      <Button className="w-full">Explore Collection</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-card">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-primary text-balance">
+              {"Can't find what you're looking for?"}
+            </h2>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Contact us for custom orders and personalized recommendations
+            </p>
+            <Link href="/contact">
+              <Button size="lg" className="text-lg px-8">
+                Get in Touch
+              </Button>
+            </Link>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  )
+}
