@@ -1,12 +1,27 @@
 "use client"
 
 import Link from "next/link"
-import { Menu, ShoppingBag, X } from "lucide-react"
+import { Menu, ShoppingBag, X, User, LogOut, Settings, Package } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    setMobileMenuOpen(false)
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
@@ -44,12 +59,55 @@ export function Navbar() {
                 0
               </span>
             </Button>
-            <Link href="/login">
-              <Button variant="outline">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button>Register</Button>
-            </Link>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden lg:block">{user?.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders">
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  {user?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline">Login</Button>
+                </Link>
+                <Link href="/register">
+                  <Button>Register</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -99,14 +157,49 @@ export function Navbar() {
               Contact
             </Link>
             <div className="pt-4 space-y-2">
-              <Link href="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full bg-transparent">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/register" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full">Register</Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/profile" className="block" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full bg-transparent">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Button>
+                  </Link>
+                  <Link href="/orders" className="block" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full bg-transparent">
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
+                    </Button>
+                  </Link>
+                  {user?.role === 'admin' && (
+                    <Link href="/admin" className="block" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full bg-transparent">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-transparent"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full bg-transparent">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/register" className="block" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full">Register</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

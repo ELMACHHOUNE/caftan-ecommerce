@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -10,12 +11,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { PublicRoute } from "@/components/auth/ProtectedRoute"
+import { useAuth } from "@/contexts/AuthContext"
+import { register as registerApi } from "@/lib/api/auth"
+import { handleApiError } from "@/lib/api/client"
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,32 +30,60 @@ export default function RegisterPage() {
     confirmPassword: "",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter()
+  const { login } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
+
+    // Validation
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match")
+      setError("Passwords do not match")
       return
     }
+    
     if (!acceptTerms) {
-      alert("Please accept the terms and conditions")
+      setError("Please accept the terms and conditions")
       return
     }
-    console.log("Register:", formData)
-    // Handle registration logic
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const { user, token } = await registerApi(formData.name, formData.email, formData.password)
+      login(user)
+      router.push('/') // Redirect to home page
+    } catch (error) {
+      setError(handleApiError(error))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
+    <PublicRoute>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
 
-      <main className="flex-1 flex items-center justify-center py-12 bg-background">
-        <div className="w-full max-w-md px-4">
-          <Card className="border-2 border-border shadow-lg">
-            <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-3xl font-bold text-primary">Create Account</CardTitle>
-              <CardDescription className="text-base">Join us to explore exquisite Moroccan caftans</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <main className="flex-1 flex items-center justify-center py-12 bg-background">
+          <div className="w-full max-w-md px-4">
+            <Card className="border-2 border-border shadow-lg">
+              <CardHeader className="space-y-2 text-center">
+                <CardTitle className="text-3xl font-bold text-primary">Create Account</CardTitle>
+                <CardDescription className="text-base">Join us to explore exquisite Moroccan caftans</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {error && (
+                  <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                    {error}
+                  </div>
+                )}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -59,6 +94,7 @@ export default function RegisterPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -71,6 +107,7 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -84,11 +121,13 @@ export default function RegisterPage() {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      disabled={isLoading}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -105,11 +144,13 @@ export default function RegisterPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      disabled={isLoading}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -130,8 +171,15 @@ export default function RegisterPage() {
                   </Label>
                 </div>
 
-                <Button type="submit" size="lg" className="w-full">
-                  Create Account
+                <Button type="submit" size="lg" className="w-full" disabled={isLoading || !acceptTerms}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </form>
 
@@ -189,5 +237,6 @@ export default function RegisterPage() {
 
       <Footer />
     </div>
+    </PublicRoute>
   )
 }

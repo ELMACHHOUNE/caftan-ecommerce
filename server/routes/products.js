@@ -1,0 +1,448 @@
+const express = require('express');
+const { body, validationResult, query } = require('express-validator');
+const Product = require('../models/Product');
+const Category = require('../models/Category');
+const { auth, admin, optionalAuth } = require('../middleware/auth');
+
+const router = express.Router();
+
+// @desc    Get all products
+// @route   GET /api/products
+// @access  Public
+router.get('/', [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be between 1 and 50'),
+  query('search')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Search term cannot exceed 100 characters'),
+  query('minPrice')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Minimum price must be a positive number'),
+  query('maxPrice')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Maximum price must be a positive number')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const search = req.query.search || '';
+    const category = req.query.category;
+    const featured = req.query.featured;
+    const onSale = req.query.onSale;
+    const minPrice = parseFloat(req.query.minPrice);
+    const maxPrice = parseFloat(req.query.maxPrice);
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+
+    // Build query
+    let query = { isActive: true };
+    
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (featured === 'true') {
+      query.featured = true;
+    }
+
+    if (onSale === 'true') {
+      query.onSale = true;
+    }
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = minPrice;
+      if (maxPrice) query.price.$lte = maxPrice;
+    }
+
+    // Calculate skip value
+    const skip = (page - 1) * limit;
+
+    // Build sort object
+    let sort = {};
+    if (search && !req.query.sortBy) {
+      sort = { score: { $meta: 'textScore' } };
+    } else {
+      sort[sortBy] = sortOrder;
+    }
+
+    // Get products
+    const products = await Product.find(query)
+      .populate('category', 'name slug')
+      .populate('createdBy', 'name')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    // Get total count
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    res.json({
+      status: 'success',
+      data: {
+        products,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalProducts,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get products error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Get single product
+// @route   GET /api/products/:id
+// @access  Public
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('category', 'name slug description')
+      .populate('createdBy', 'name')
+      .populate('reviews.user', 'name avatar');
+    
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+
+    if (!product.isActive) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not available'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      data: { product }
+    });
+
+  } catch (error) {
+    console.error('Get product error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Create new product
+// @route   POST /api/products
+// @access  Private/Admin
+router.post('/', [auth, admin], [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Product name must be between 2 and 100 characters'),
+  body('description')
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage('Description must be between 10 and 1000 characters'),
+  body('price')
+    .isFloat({ min: 0 })
+    .withMessage('Price must be a positive number'),
+  body('category')
+    .isMongoId()
+    .withMessage('Please provide a valid category ID'),
+  body('stock')
+    .isInt({ min: 0 })
+    .withMessage('Stock must be a non-negative integer')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    // Check if category exists
+    const category = await Category.findById(req.body.category);
+    if (!category) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Category not found'
+      });
+    }
+
+    // Create product
+    const product = new Product({
+      ...req.body,
+      createdBy: req.user.id
+    });
+
+    await product.save();
+
+    // Populate the response
+    await product.populate('category', 'name slug');
+    await product.populate('createdBy', 'name');
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Product created successfully',
+      data: { product }
+    });
+
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Update product
+// @route   PUT /api/products/:id
+// @access  Private/Admin
+router.put('/:id', [auth, admin], [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Product name must be between 2 and 100 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage('Description must be between 10 and 1000 characters'),
+  body('price')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Price must be a positive number'),
+  body('category')
+    .optional()
+    .isMongoId()
+    .withMessage('Please provide a valid category ID'),
+  body('stock')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Stock must be a non-negative integer')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    // Check if category exists (if updating category)
+    if (req.body.category) {
+      const category = await Category.findById(req.body.category);
+      if (!category) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Category not found'
+        });
+      }
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('category', 'name slug').populate('createdBy', 'name');
+    
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Product updated successfully',
+      data: { product }
+    });
+
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Delete product
+// @route   DELETE /api/products/:id
+// @access  Private/Admin
+router.delete('/:id', [auth, admin], async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Product deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Add product review
+// @route   POST /api/products/:id/reviews
+// @access  Private
+router.post('/:id/reviews', auth, [
+  body('rating')
+    .isInt({ min: 1, max: 5 })
+    .withMessage('Rating must be between 1 and 5'),
+  body('comment')
+    .trim()
+    .isLength({ min: 5, max: 500 })
+    .withMessage('Comment must be between 5 and 500 characters')
+], async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { rating, comment } = req.body;
+
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Product not found'
+      });
+    }
+
+    // Check if user already reviewed this product
+    const existingReview = product.reviews.find(
+      review => review.user.toString() === req.user.id
+    );
+
+    if (existingReview) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'You have already reviewed this product'
+      });
+    }
+
+    // Add review
+    product.reviews.push({
+      user: req.user.id,
+      rating,
+      comment
+    });
+
+    // Update ratings
+    product.updateRatings();
+
+    await product.save();
+
+    // Populate the new review
+    await product.populate('reviews.user', 'name avatar');
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Review added successfully',
+      data: { 
+        review: product.reviews[product.reviews.length - 1],
+        ratings: product.ratings
+      }
+    });
+
+  } catch (error) {
+    console.error('Add review error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Get featured products
+// @route   GET /api/products/featured/list
+// @access  Public
+router.get('/featured/list', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 8;
+
+    const products = await Product.find({ 
+      featured: true, 
+      isActive: true 
+    })
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    res.json({
+      status: 'success',
+      data: { products }
+    });
+
+  } catch (error) {
+    console.error('Get featured products error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
+module.exports = router;
