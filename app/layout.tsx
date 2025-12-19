@@ -13,7 +13,9 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "Caftan Elegance - Moroccan Luxury Caftans",
   description: "Rent or buy exquisite Moroccan caftans. Discover traditional craftsmanship meets modern elegance.",
-  generator: "v0.app",
+  generator: "Next.js",
+  applicationName: "Caftan Elegance",
+  referrer: "origin-when-cross-origin",
   icons: {
     icon: [
       {
