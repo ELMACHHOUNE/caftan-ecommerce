@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
 import { ShoppingCart, Heart, Ruler, Package, ShieldCheck, Clock } from "lucide-react"
+import { useCart } from "@/contexts/CartContext"
 import Link from "next/link"
 
 // Mock data
@@ -85,9 +86,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [selectedImage, setSelectedImage] = useState(0)
   const [purchaseType, setPurchaseType] = useState<"buy" | "rent">("buy")
   const [selectedSize, setSelectedSize] = useState("")
+  const { addItem, toggleCart } = useCart()
 
   const handleAddToCart = () => {
-    console.log("Added to cart:", { product: product.name, type: purchaseType, size: selectedSize })
+    if (!selectedSize) return
+    
+    const price = purchaseType === "buy" ? product.buyPrice : product.rentPrice
+    
+    addItem({
+      id: product.id.toString(),
+      name: product.name,
+      price: price,
+      image: product.images[0],
+      size: selectedSize,
+      type: purchaseType,
+      rentDuration: purchaseType === "rent" ? 7 : undefined,
+      rentPrice: purchaseType === "rent" ? product.rentPrice : undefined
+    })
+    
+    // Open cart sidebar to show the added item
+    toggleCart()
   }
 
   return (

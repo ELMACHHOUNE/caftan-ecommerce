@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { CartProvider } from "@/contexts/CartContext"
+import { CartSidebar } from "@/components/cart-sidebar"
 import "./globals.css"
 
 const playfairDisplay = Playfair_Display({
@@ -45,7 +47,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfairDisplay.variable} font-sans antialiased`}>
         <AuthProvider>
-          {children}
+          <CartProvider>
+            {children}
+            <CartSidebar />
+          </CartProvider>
         </AuthProvider>
         <Analytics />
       </body>

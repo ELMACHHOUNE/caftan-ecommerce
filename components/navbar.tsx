@@ -13,10 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/AuthContext"
+import { useCart } from "@/contexts/CartContext"
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, isAuthenticated, logout } = useAuth()
+  const { totalItems, toggleCart } = useCart()
 
   const handleLogout = () => {
     logout()
@@ -53,11 +55,13 @@ export function Navbar() {
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative" onClick={toggleCart}>
               <ShoppingBag className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </Button>
             
             {isAuthenticated ? (
@@ -157,6 +161,17 @@ export function Navbar() {
               Contact
             </Link>
             <div className="pt-4 space-y-2">
+              <Button 
+                variant="outline" 
+                className="w-full bg-transparent"
+                onClick={() => {
+                  toggleCart()
+                  setMobileMenuOpen(false)
+                }}
+              >
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Cart ({totalItems})
+              </Button>
               {isAuthenticated ? (
                 <>
                   <Link href="/profile" className="block" onClick={() => setMobileMenuOpen(false)}>

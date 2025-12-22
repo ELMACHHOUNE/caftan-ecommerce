@@ -73,9 +73,9 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Connect With Us</h4>
             <ul className="space-y-2 text-sm mb-4">
-              <li>Email: info@caftanelegance.com</li>
-              <li>Phone: +212 5XX-XXXXXX</li>
-              <li>Casablanca, Morocco</li>
+              <li>Email: business.aguizoul@gmail.com</li>
+              <li>Phone: +212652901122</li>
+              <li>Guelmim, Morocco</li>
             </ul>
             <div className="flex gap-4">
               <a href="#" className="hover:opacity-70 transition-opacity">

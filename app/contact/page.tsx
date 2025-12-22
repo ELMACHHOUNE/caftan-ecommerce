@@ -116,21 +116,21 @@ export default function ContactPage() {
                       <Mail className="h-5 w-5 text-accent mt-1 flex-shrink-0" />
                       <div>
                         <p className="font-semibold">Email</p>
-                        <p className="text-sm text-muted-foreground">info@caftanelegance.com</p>
+                        <p className="text-sm text-muted-foreground">business.aguizoul@gmail.com</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Phone className="h-5 w-5 text-accent mt-1 flex-shrink-0" />
                       <div>
                         <p className="font-semibold">Phone</p>
-                        <p className="text-sm text-muted-foreground">+212 5XX-XXXXXX</p>
+                        <p className="text-sm text-muted-foreground">+212652901122</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <MapPin className="h-5 w-5 text-accent mt-1 flex-shrink-0" />
                       <div>
                         <p className="font-semibold">Address</p>
-                        <p className="text-sm text-muted-foreground">123 Medina Street, Casablanca, Morocco</p>
+                        <p className="text-sm text-muted-foreground">Guelmim, Morocco</p>
                       </div>
                     </div>
                   </CardContent>
