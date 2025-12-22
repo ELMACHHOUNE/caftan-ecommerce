@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold">Caftan Elegance</h3>
+            <h3 className="text-2xl font-bold">Aguizoul Caftan</h3>
             <p className="text-sm leading-relaxed opacity-90">
               Discover the beauty of Moroccan heritage through our exquisite collection of traditional and modern
               caftans.
@@ -92,7 +92,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm opacity-75">
-          <p>&copy; {new Date().getFullYear()} Caftan Elegance. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Aguizoul Caftan. All rights reserved.</p>
         </div>
       </div>
     </footer>

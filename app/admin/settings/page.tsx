@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +13,7 @@ import { Switch } from "@/components/ui/switch"
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
-    storeName: "Caftan Elegance",
+    storeName: "Aguizoul Caftan",
     storeEmail: "info@caftanelegance.com",
     storePhone: "+212 5XX-XXXXXX",
     storeAddress: "123 Medina Street, Casablanca, Morocco",
@@ -31,7 +32,8 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <AdminRoute>
+      <div className="flex min-h-screen bg-background">
       <AdminSidebar />
 
       <main className="flex-1 overflow-auto">
@@ -192,5 +194,6 @@ export default function AdminSettingsPage() {
         </div>
       </main>
     </div>
+    </AdminRoute>
   )
 }

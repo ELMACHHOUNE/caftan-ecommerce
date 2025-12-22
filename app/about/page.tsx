@@ -45,7 +45,7 @@ export default function AboutPage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="prose prose-lg max-w-none">
               <p className="text-lg leading-relaxed text-foreground">
-                Caftan Elegance was born from a deep love for Moroccan heritage and a vision to share the beauty of
+                Aguizoul Caftan was born from a deep love for Moroccan heritage and a vision to share the beauty of
                 traditional caftans with the world. For generations, Moroccan artisans have perfected the art of
                 caftan-making, weaving stories of culture, celebration, and craftsmanship into every thread.
               </p>

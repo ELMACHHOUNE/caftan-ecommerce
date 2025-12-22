@@ -31,7 +31,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-primary">Caftan Elegance</div>
+            <div className="text-2xl font-bold text-primary">Aguizoul Caftan</div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -87,7 +87,7 @@ export function Navbar() {
                       My Orders
                     </Link>
                   </DropdownMenuItem>
-                  {user?.role === 'admin' && (
+                  {user?.role === 'admin' && user?.email === 'business.aguizoul@gmail.com' && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
                         <Settings className="mr-2 h-4 w-4" />
@@ -186,7 +186,7 @@ export function Navbar() {
                       My Orders
                     </Button>
                   </Link>
-                  {user?.role === 'admin' && (
+                  {user?.role === 'admin' && user?.email === 'business.aguizoul@gmail.com' && (
                     <Link href="/admin" className="block" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="outline" className="w-full bg-transparent">
                         <Settings className="mr-2 h-4 w-4" />

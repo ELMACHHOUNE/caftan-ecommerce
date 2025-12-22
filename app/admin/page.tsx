@@ -1,4 +1,7 @@
+"use client"
+
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Users, ShoppingCart, DollarSign, TrendingUp, ArrowUpRight } from "lucide-react"
 
@@ -43,8 +46,9 @@ export default function AdminDashboardPage() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
+    <AdminRoute>
+      <div className="flex min-h-screen bg-background">
+        <AdminSidebar />
 
       <main className="flex-1 overflow-auto">
         {/* Header */}
@@ -160,5 +164,6 @@ export default function AdminDashboardPage() {
         </div>
       </main>
     </div>
+    </AdminRoute>
   )
 }

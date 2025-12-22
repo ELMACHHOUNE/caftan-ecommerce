@@ -1,4 +1,7 @@
+"use client"
+
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -70,7 +73,8 @@ const orders = [
 
 export default function AdminOrdersPage() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <AdminRoute>
+      <div className="flex min-h-screen bg-background">
       <AdminSidebar />
 
       <main className="flex-1 overflow-auto">
@@ -187,5 +191,6 @@ export default function AdminOrdersPage() {
         </div>
       </main>
     </div>
+    </AdminRoute>
   )
 }

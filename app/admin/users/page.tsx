@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -67,7 +68,8 @@ export default function AdminUsersPage() {
   )
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <AdminRoute>
+      <div className="flex min-h-screen bg-background">
       <AdminSidebar />
 
       <main className="flex-1 overflow-auto">
@@ -158,5 +160,6 @@ export default function AdminUsersPage() {
         </div>
       </main>
     </div>
+    </AdminRoute>
   )
 }

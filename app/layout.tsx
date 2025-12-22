@@ -14,10 +14,10 @@ const playfairDisplay = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "Caftan Elegance - Moroccan Luxury Caftans",
+  title: "Aguizoul Caftan - Moroccan Luxury Caftans",
   description: "Rent or buy exquisite Moroccan caftans. Discover traditional craftsmanship meets modern elegance.",
   generator: "Next.js",
-  applicationName: "Caftan Elegance",
+  applicationName: "Aguizoul Caftan",
   referrer: "origin-when-cross-origin",
   icons: {
     icon: [
