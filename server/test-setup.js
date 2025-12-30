@@ -17,17 +17,17 @@ const testConnection = async () => {
     const adminExists = await User.findOne({ role: 'admin' });
     
     if (!adminExists) {
-      console.log('👑 Creating default admin user...');
+      console.log('👑 Creating authorized admin user...');
       const adminUser = new User({
-        name: 'Admin User',
-        email: 'admin@caftan.com',
+        name: 'Aguizoul Admin',
+        email: 'business.aguizoul@gmail.com',
         password: 'Admin123!',
         role: 'admin'
       });
       
       await adminUser.save();
       console.log('✅ Admin user created successfully');
-      console.log('📧 Email: admin@caftan.com');
+      console.log('📧 Email: business.aguizoul@gmail.com');
       console.log('🔑 Password: Admin123!');
     } else {
       console.log('ℹ️  Admin user already exists');

@@ -123,19 +123,23 @@ curl http://localhost:5000/api/health
 
 ### 2. Test Admin Login
 - Go to: http://localhost:3000/login
-- Email: `admin@caftan.com`
+- Email: `business.aguizoul@gmail.com`
 - Password: `Admin123!`
 
 ### 3. Test User Registration
 - Go to: http://localhost:3000/register
 - Create a new user account
 
-## 📊 Default Admin Account
+## 📊 Admin Access
 
-After running `npm run setup` in the server directory, you'll have:
-- **Email:** admin@caftan.com
-- **Password:** Admin123!
+⚠️ **Important:** Admin access is restricted to authorized emails only.
+
+### Current Admin Account:
+- **Email:** business.aguizoul@gmail.com
+- **Password:** [Use your account password]
 - **Role:** Admin (full access)
+
+**Note:** Only the email `business.aguizoul@gmail.com` has admin privileges. Other accounts with admin role will still be denied access for security.
 
 ## 🔍 API Endpoints
 

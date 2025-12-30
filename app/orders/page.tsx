@@ -22,7 +22,8 @@ import {
   ShoppingBag,
   Filter,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  MessageCircle
 } from "lucide-react"
 
 export default function OrdersPage() {
@@ -188,6 +189,27 @@ export default function OrdersPage() {
                         Start Shopping
                       </Link>
                     </Button>
+                    
+                    {/* WhatsApp Contact */}
+                    <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-center">
+                        <MessageCircle className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                        <h4 className="text-lg font-medium text-green-800 mb-2">Need Help?</h4>
+                        <p className="text-green-700 mb-4">
+                          Welcome to rent or buy exquisite traditional caftans for your special moments
+                        </p>
+                        <a 
+                          href="https://wa.me/212652901122?text=Hello%2C%20I%27m%20interested%20in%20your%20caftans"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Contact us on WhatsApp
+                        </a>
+                        <p className="text-sm text-green-600 mt-2">+212652901122</p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -337,6 +359,32 @@ export default function OrdersPage() {
                 )}
               </div>
             )}
+            
+            {/* WhatsApp Contact Section */}
+            <div className="mt-12">
+              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="pt-8 pb-8">
+                  <div className="text-center">
+                    <MessageCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-green-800 mb-3">Questions About Your Orders?</h3>
+                    <p className="text-green-700 mb-6 max-w-2xl mx-auto">
+                      Welcome to rent or buy exquisite traditional caftans for your special moments.
+                      Contact us directly on WhatsApp for instant support with your orders, sizing, or any questions.
+                    </p>
+                    <a 
+                      href="https://wa.me/212652901122?text=Hello%2C%20I%20have%20questions%20about%20my%20order"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-3 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      Chat with us on WhatsApp
+                    </a>
+                    <p className="text-green-600 mt-3 font-medium">+212652901122</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
 
