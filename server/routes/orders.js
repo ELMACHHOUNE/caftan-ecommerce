@@ -3,7 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { auth, admin } = require('../middleware/auth');
+const { auth, admin, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -223,7 +223,7 @@ router.get('/my-orders', auth, [
 // @desc    Get all orders (Admin)
 // @route   GET /api/orders
 // @access  Private/Admin
-router.get('/', [auth, admin], [
+router.get('/', [auth, requireRole('admin')], [
   query('page')
     .optional()
     .isInt({ min: 1 })
@@ -343,7 +343,7 @@ router.get('/:id', auth, async (req, res) => {
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
-router.put('/:id/status', [auth, admin], [
+router.put('/:id/status', [auth, requireRole('admin')], [
   body('status')
     .isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])
     .withMessage('Please provide a valid order status'),
@@ -475,7 +475,7 @@ router.put('/:id/cancel', auth, async (req, res) => {
 // @desc    Get order statistics (Admin)
 // @route   GET /api/orders/stats/overview
 // @access  Private/Admin
-router.get('/stats/overview', [auth, admin], async (req, res) => {
+router.get('/stats/overview', [auth, requireRole('admin')], async (req, res) => {
   try {
     const totalOrders = await Order.countDocuments();
     const pendingOrders = await Order.countDocuments({ orderStatus: 'pending' });

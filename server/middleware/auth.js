@@ -70,6 +70,17 @@ const admin = (req, res, next) => {
   }
 };
 
+// Generic role guard for extensibility
+const requireRole = (role) => (req, res, next) => {
+  if (req.user && req.user.role === role) {
+    return next();
+  }
+  return res.status(403).json({
+    status: 'error',
+    message: `Access denied. ${role} role required.`
+  });
+};
+
 // Optional auth - doesn't fail if no token
 const optionalAuth = async (req, res, next) => {
   try {
@@ -100,4 +111,4 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, admin, optionalAuth };
+module.exports = { auth, admin, optionalAuth, requireRole };

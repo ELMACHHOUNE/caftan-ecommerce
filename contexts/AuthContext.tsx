@@ -64,6 +64,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = (userData: User) => {
     setUser(userData)
+    // Ensure we have the latest user (e.g., role changes from DB)
+    // Run in background; ignore errors to avoid disrupting UX
+    refetchUser().catch((err) => {
+      console.warn('Background refetch after login failed:', err)
+    })
   }
 
   const logout = () => {

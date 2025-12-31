@@ -65,6 +65,18 @@ app.use('*', (req, res) => {
   });
 });
 
+// Error handling for uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  console.error('Stack:', err.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -76,6 +88,10 @@ mongoose.connect(process.env.MONGODB_URI)
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
       console.log(`Health endpoint: http://localhost:${PORT}/api/health`);
       console.log(`API base URL: http://localhost:${PORT}/api`);
+    });
+
+    server.on('error', (err) => {
+      console.error('Server error:', err);
     });
   })
   .catch(err => {

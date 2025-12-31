@@ -7,13 +7,14 @@ import { useEffect, ReactNode } from 'react'
 interface ProtectedRouteProps {
   children: ReactNode
   requireAdmin?: boolean
-  redirectTo?: string
+  redirectTo?: string // where to send unauthenticated users
 }
 
+// Unified protected route with role-based guard
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAdmin = false,
-  redirectTo = '/login'
+  redirectTo = '/login',
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
@@ -21,18 +22,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   useEffect(() => {
     if (isLoading) return // Wait for auth to initialize
 
+    // Not logged in → go to login
     if (!isAuthenticated) {
       router.push(redirectTo)
       return
     }
 
+    // Logged in but not admin when required → go to unauthorized page
     if (requireAdmin && user?.role !== 'admin') {
-      router.push('/') // Redirect to home if not admin
+      router.push('/unauthorized')
       return
     }
   }, [isAuthenticated, isLoading, user, requireAdmin, redirectTo, router])
 
-  // Show loading while checking authentication
+  // Loading state while checking auth
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -41,94 +44,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     )
   }
 
-  // Don't render children if not authenticated
-  if (!isAuthenticated) {
-    return null
-  }
-
-  // Don't render if admin required but user is not admin
-  if (requireAdmin && user?.role !== 'admin') {
-    return null
-  }
+  // Block rendering if not allowed
+  if (!isAuthenticated) return null
+  if (requireAdmin && user?.role !== 'admin') return null
 
   return <>{children}</>
 }
 
-// Enhanced Admin Protection - Only specific admin emails allowed
+// Backward-compatible AdminRoute wrapper (no email whitelist)
 interface AdminRouteProps {
   children: ReactNode
-  redirectTo?: string
+  redirectTo?: string // unused; admin unauthorized goes to /unauthorized
 }
 
-export const AdminRoute: React.FC<AdminRouteProps> = ({
-  children,
-  redirectTo = '/'
-}) => {
-  const { user, isAuthenticated, isLoading } = useAuth()
-  const router = useRouter()
-
-  // List of authorized admin emails
-  const authorizedAdmins = [
-    'business.aguizoul@gmail.com'
-  ]
-
-  useEffect(() => {
-    if (isLoading) return // Wait for auth to initialize
-
-    if (!isAuthenticated) {
-      router.push('/login')
-      return
-    }
-
-    // Check if user has admin role AND is in authorized list
-    const isAuthorizedAdmin = user?.role === 'admin' && 
-                             user?.email && 
-                             authorizedAdmins.includes(user.email)
-
-    if (!isAuthorizedAdmin) {
-      console.warn('Unauthorized admin access attempt:', user?.email)
-      router.push(redirectTo)
-      return
-    }
-  }, [isAuthenticated, isLoading, user, redirectTo, router])
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  // Don't render children if not authenticated
-  if (!isAuthenticated) {
-    return null
-  }
-
-  // Enhanced admin check
-  const isAuthorizedAdmin = user?.role === 'admin' && 
-                           user?.email && 
-                           authorizedAdmins.includes(user.email)
-
-  if (!isAuthorizedAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-4">You don't have permission to access this area.</p>
-          <button 
-            onClick={() => router.push('/')}
-            className="text-primary hover:underline"
-          >
-            Return to Home
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return <>{children}</>
+export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+  return <ProtectedRoute requireAdmin>{children}</ProtectedRoute>
 }
 
 interface PublicRouteProps {
@@ -138,21 +68,18 @@ interface PublicRouteProps {
 
 export const PublicRoute: React.FC<PublicRouteProps> = ({
   children,
-  redirectTo = '/'
+  redirectTo = '/',
 }) => {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (isLoading) return // Wait for auth to initialize
-
+    if (isLoading) return
     if (isAuthenticated) {
       router.push(redirectTo)
-      return
     }
   }, [isAuthenticated, isLoading, redirectTo, router])
 
-  // Show loading while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -161,10 +88,6 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
     )
   }
 
-  // Don't render children if authenticated (for login/register pages)
-  if (isAuthenticated) {
-    return null
-  }
-
+  if (isAuthenticated) return null
   return <>{children}</>
 }

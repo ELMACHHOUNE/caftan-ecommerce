@@ -1,5 +1,5 @@
 // Orders API functions
-import { apiClient, type ApiResponse } from './client'
+import { apiClient } from './client'
 
 // Order related types
 export interface OrderItem {
@@ -49,6 +49,56 @@ export interface Order {
   createdAt: string
   updatedAt: string
 }
+// Client-normalized Order type
+export interface Order {
+  id: string
+  user?: any
+  orderItems: OrderItem[]
+  shippingAddress: ShippingAddress
+  paymentMethod: string
+  paymentResult?: {
+    id?: string
+    status?: string
+    update_time?: string
+    email_address?: string
+  }
+  subtotal: number
+  tax: number
+  shippingPrice: number
+  totalPrice: number
+  isPaid?: boolean
+  paidAt?: string
+  isDelivered: boolean
+  deliveredAt?: string
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+  trackingNumber?: string
+  estimatedDelivery?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// Server order shape (partial, as routes may populate differently)
+interface ServerOrder {
+  _id: string
+  user?: any
+  orderItems: any[]
+  shippingAddress: ShippingAddress
+  paymentMethod: string
+  paymentResult?: any
+  subtotal: number
+  taxAmount: number
+  shippingCost: number
+  totalAmount: number
+  isPaid?: boolean
+  paidAt?: string
+  isDelivered: boolean
+  deliveredAt?: string
+  orderStatus: Order['status']
+  trackingNumber?: string
+  estimatedDelivery?: string
+  createdAt: string
+  updatedAt: string
+}
 
 export interface OrdersResponse {
   orders: Order[]
@@ -87,10 +137,20 @@ export const getUserOrders = async (params?: {
     const query = queryParams.toString()
     const endpoint = `/orders/my-orders${query ? `?${query}` : ''}`
     
-    const response = await apiClient.get<OrdersResponse>(endpoint)
+    const response = await apiClient.get<{ orders: ServerOrder[]; pagination: { currentPage: number; totalPages: number; totalOrders: number; hasNext: boolean; hasPrev: boolean } }>(endpoint)
     
     if (response.status === 'success' && response.data) {
-      return response.data
+      const { orders, pagination } = response.data
+      return {
+        orders: orders.map(mapOrder),
+        pagination: {
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          totalOrders: pagination.totalOrders,
+          hasMore: pagination.hasNext,
+          hasPrev: pagination.hasPrev,
+        },
+      }
     } else {
       throw new Error(response.message || 'Failed to fetch orders')
     }
@@ -102,10 +162,10 @@ export const getUserOrders = async (params?: {
 // Get single order by ID
 export const getOrderById = async (orderId: string): Promise<Order> => {
   try {
-    const response = await apiClient.get<{ order: Order }>(`/orders/${orderId}`)
+    const response = await apiClient.get<{ order: ServerOrder }>(`/orders/${orderId}`)
     
     if (response.status === 'success' && response.data?.order) {
-      return response.data.order
+      return mapOrder(response.data.order)
     } else {
       throw new Error(response.message || 'Failed to fetch order')
     }
@@ -117,10 +177,10 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
 // Create new order
 export const createOrder = async (orderData: CreateOrderData): Promise<Order> => {
   try {
-    const response = await apiClient.post<{ order: Order }>('/orders', orderData)
+    const response = await apiClient.post<{ order: ServerOrder }>('/orders', orderData)
     
     if (response.status === 'success' && response.data?.order) {
-      return response.data.order
+      return mapOrder(response.data.order)
     } else {
       throw new Error(response.message || 'Failed to create order')
     }
@@ -132,12 +192,12 @@ export const createOrder = async (orderData: CreateOrderData): Promise<Order> =>
 // Cancel order
 export const cancelOrder = async (orderId: string, reason?: string): Promise<Order> => {
   try {
-    const response = await apiClient.put<{ order: Order }>(`/orders/${orderId}/cancel`, {
+    const response = await apiClient.put<{ order: ServerOrder }>(`/orders/${orderId}/cancel`, {
       reason
     })
     
     if (response.status === 'success' && response.data?.order) {
-      return response.data.order
+      return mapOrder(response.data.order)
     } else {
       throw new Error(response.message || 'Failed to cancel order')
     }
@@ -167,4 +227,47 @@ export const formatPrice = (price: number): string => {
     style: 'currency',
     currency: 'USD'
   }).format(price)
+}
+
+// Admin: get all orders
+export const getAllOrders = async (params?: { page?: number; limit?: number; status?: string; search?: string }): Promise<OrdersResponse> => {
+  try {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.append('page', String(params.page))
+    if (params?.limit) qs.append('limit', String(params.limit))
+    if (params?.status) qs.append('status', params.status)
+    if (params?.search) qs.append('search', params.search)
+    const endpoint = `/orders${qs.toString() ? `?${qs.toString()}` : ''}`
+
+    const response = await apiClient.get<{ orders: ServerOrder[]; pagination: { currentPage: number; totalPages: number; totalOrders: number; hasNext: boolean; hasPrev: boolean } }>(endpoint)
+    if (response.status === 'success' && response.data) {
+      const { orders, pagination } = response.data
+      return {
+        orders: orders.map(mapOrder),
+        pagination: {
+          currentPage: pagination.currentPage,
+          totalPages: pagination.totalPages,
+          totalOrders: pagination.totalOrders,
+          hasMore: pagination.hasNext,
+          hasPrev: pagination.hasPrev,
+        },
+      }
+    }
+    throw new Error(response.message || 'Failed to fetch orders')
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch orders')
+  }
+}
+
+// Admin: update order status
+export const updateOrderStatus = async (orderId: string, payload: { status: Order['status']; trackingNumber?: string; shippingCarrier?: string }): Promise<Order> => {
+  try {
+    const response = await apiClient.put<{ order: ServerOrder }>(`/orders/${orderId}/status`, payload)
+    if (response.status === 'success' && response.data?.order) {
+      return mapOrder(response.data.order)
+    }
+    throw new Error(response.message || 'Failed to update order status')
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to update order status')
+  }
 }
