@@ -25,6 +25,33 @@ export interface ShippingAddress {
 
 export interface Order {
   id: string
+  user: string
+  orderItems: OrderItem[]
+  shippingAddress: ShippingAddress
+  paymentMethod: string
+  paymentResult?: {
+    id?: string
+    status?: string
+    update_time?: string
+    email_address?: string
+  }
+  subtotal: number
+  tax: number
+  shippingPrice: number
+  totalPrice: number
+  isPaid: boolean
+  paidAt?: string
+  isDelivered: boolean
+  deliveredAt?: string
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+  trackingNumber?: string
+  estimatedDelivery?: string
+  createdAt: string
+  updatedAt: string
+}
+// Client-normalized Order type
+export interface Order {
+  id: string
   user?: any
   orderItems: OrderItem[]
   shippingAddress: ShippingAddress
@@ -49,7 +76,6 @@ export interface Order {
   createdAt: string
   updatedAt: string
 }
-// Client-normalized Order type
 
 // Server order shape (partial, as routes may populate differently)
 interface ServerOrder {
@@ -74,40 +100,6 @@ interface ServerOrder {
   updatedAt: string
 }
 
-// Map server order to client-normalized order
-const mapOrder = (server: ServerOrder): Order => {
-  return {
-    id: server._id,
-    user: server.user,
-    orderItems: (server.orderItems || []).map((item: any) => ({
-      product: typeof item.product === 'string' ? item.product : item.product?._id || '',
-      name: item.name || item.product?.name || '',
-      image: item.image || item.product?.images?.[0]?.url || '',
-      price: item.price,
-      quantity: item.quantity,
-      size: item.size,
-      color: item.color,
-      sku: item.sku,
-    })),
-    shippingAddress: server.shippingAddress,
-    paymentMethod: server.paymentMethod,
-    paymentResult: server.paymentResult,
-    subtotal: server.subtotal,
-    tax: server.taxAmount,
-    shippingPrice: server.shippingCost,
-    totalPrice: server.totalAmount,
-    isPaid: server.isPaid,
-    paidAt: server.paidAt,
-    isDelivered: server.isDelivered,
-    deliveredAt: server.deliveredAt,
-    status: server.orderStatus,
-    trackingNumber: server.trackingNumber,
-    estimatedDelivery: server.estimatedDelivery,
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-  }
-}
-
 export interface OrdersResponse {
   orders: Order[]
   pagination: {
@@ -115,7 +107,6 @@ export interface OrdersResponse {
     totalPages: number
     totalOrders: number
     hasMore: boolean
-    hasPrev: boolean
   }
 }
 
@@ -278,18 +269,5 @@ export const updateOrderStatus = async (orderId: string, payload: { status: Orde
     throw new Error(response.message || 'Failed to update order status')
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : 'Failed to update order status')
-  }
-}
-
-// Admin: get order statistics overview
-export const getOrderStatsOverview = async (): Promise<{ overview: { totalOrders: number; pendingOrders: number; deliveredOrders: number; cancelledOrders: number; totalRevenue: number }; revenueTrends: any[] }> => {
-  try {
-    const response = await apiClient.get<{ overview: { totalOrders: number; pendingOrders: number; deliveredOrders: number; cancelledOrders: number; totalRevenue: number }; revenueTrends: any[] }>(`/orders/stats/overview`)
-    if (response.status === 'success' && response.data) {
-      return response.data
-    }
-    throw new Error(response.message || 'Failed to fetch order stats')
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Failed to fetch order stats')
   }
 }

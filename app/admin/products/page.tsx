@@ -1,67 +1,42 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Edit, Trash2, Eye } from "lucide-react"
-
-// Mock data
-const mockProducts = [
-  {
-    id: 1,
-    name: "Royal Wedding Caftan",
-    category: "Wedding",
-    price: 299,
-    rentPrice: 89,
-    stock: 12,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Traditional Luxury",
-    category: "Traditional",
-    price: 249,
-    rentPrice: 69,
-    stock: 8,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Modern Elegance",
-    category: "Luxury",
-    price: 199,
-    rentPrice: 59,
-    stock: 15,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Classic Heritage",
-    category: "Traditional",
-    price: 279,
-    rentPrice: 79,
-    stock: 5,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Bridal Splendor",
-    category: "Wedding",
-    price: 399,
-    rentPrice: 129,
-    stock: 3,
-    status: "Low Stock",
-  },
-]
+import { getProducts, type Product } from "@/lib/api/products"
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [products] = useState(mockProducts)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        setLoading(true)
+        const res = await getProducts({ limit: 50, sortBy: 'createdAt', sortOrder: 'desc' })
+        if (!mounted) return
+        setProducts(res.products)
+        setError(null)
+      } catch (e) {
+        if (!mounted) return
+        setError(e instanceof Error ? e.message : 'Failed to load products')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => product.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [products, searchQuery])
 
   return (
     <AdminRoute>
@@ -112,7 +87,7 @@ export default function AdminProductsPage() {
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Product Name</th>
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Category</th>
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Buy Price</th>
-                      <th className="text-left py-4 px-6 font-semibold text-foreground">Rent Price</th>
+                      <th className="text-left py-4 px-6 font-semibold text-foreground">Sale Price</th>
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Stock</th>
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Status</th>
                       <th className="text-left py-4 px-6 font-semibold text-foreground">Actions</th>
@@ -120,21 +95,23 @@ export default function AdminProductsPage() {
                   </thead>
                   <tbody>
                     {filteredProducts.map((product) => (
-                      <tr key={product.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <tr key={product._id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="py-4 px-6 font-medium text-foreground">{product.name}</td>
-                        <td className="py-4 px-6 text-muted-foreground">{product.category}</td>
+                        <td className="py-4 px-6 text-muted-foreground">{product.category?.name}</td>
                         <td className="py-4 px-6 text-muted-foreground">${product.price}</td>
-                        <td className="py-4 px-6 text-muted-foreground">${product.rentPrice}/day</td>
+                        <td className="py-4 px-6 text-muted-foreground">{product.onSale && product.salePrice ? `$${product.salePrice}` : '-'}</td>
                         <td className="py-4 px-6 text-muted-foreground">{product.stock} units</td>
                         <td className="py-4 px-6">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              product.status === "Active"
+                              product.isActive
                                 ? "bg-green-100 text-green-800"
-                                : "bg-orange-100 text-orange-800"
+                                : product.stock <= 3
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {product.status}
+                            {product.isActive ? "Active" : product.stock <= 3 ? "Low Stock" : "Inactive"}
                           </span>
                         </td>
                         <td className="py-4 px-6">
@@ -156,7 +133,17 @@ export default function AdminProductsPage() {
                 </table>
               </div>
 
-              {filteredProducts.length === 0 && (
+              {loading && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Loading products...</p>
+                </div>
+              )}
+              {error && (
+                <div className="text-center py-12">
+                  <p className="text-destructive">{error}</p>
+                </div>
+              )}
+              {!loading && !error && filteredProducts.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">No products found matching your search.</p>
                 </div>
