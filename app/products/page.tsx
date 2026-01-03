@@ -6,10 +6,12 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
 import { SlidersHorizontal } from "lucide-react"
 import { getProducts, type Product } from "@/lib/api/products"
+import { useSearchParams } from "next/navigation"
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -19,12 +21,15 @@ export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState<string>("all")
   const [showFilters, setShowFilters] = useState(false)
 
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('category') || undefined
+
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
         setLoading(true)
-        const res = await getProducts({ limit: 24, sortBy: 'createdAt', sortOrder: 'desc' })
+        const res = await getProducts({ limit: 24, sortBy: 'createdAt', sortOrder: 'desc', category: categoryParam })
         if (!mounted) return
         setProducts(res.products)
         setError(null)
@@ -38,7 +43,7 @@ export default function ProductsPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [categoryParam])
 
   const availableCategories = useMemo(() => {
     const set = new Set<string>()
@@ -74,7 +79,7 @@ export default function ProductsPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-primary via-secondary to-accent text-primary-foreground">
+        <section className="py-20 bg-linear-to-br from-primary via-secondary to-accent text-primary-foreground">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             <h1 className="text-5xl md:text-6xl font-bold text-balance">Our Collection</h1>
             <p className="text-xl leading-relaxed opacity-90">Discover exquisite Moroccan caftans for every occasion</p>
@@ -86,7 +91,7 @@ export default function ProductsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Filters Sidebar */}
-              <aside className="lg:w-64 flex-shrink-0">
+              <aside className="lg:w-64 shrink-0">
                 <div className="sticky top-24">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-primary">Filters</h2>
@@ -187,7 +192,7 @@ export default function ProductsPage() {
                   {filteredProducts.map((product) => (
                     <Link key={product._id} href={`/products/${product._id}`}>
                       <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-border hover:border-accent">
-                        <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                        <div className="relative aspect-3/4 overflow-hidden bg-muted">
                           <img
                             src={product.images?.[0]?.url || "/placeholder.svg"}
                             alt={product.name}

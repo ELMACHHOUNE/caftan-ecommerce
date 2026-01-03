@@ -19,7 +19,7 @@ export default async function CategoriesPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-primary via-secondary to-accent text-primary-foreground">
+        <section className="py-20 bg-linear-to-br from-primary via-secondary to-accent text-primary-foreground">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
             <h1 className="text-5xl md:text-6xl font-bold text-balance">Browse Categories</h1>
             <p className="text-xl leading-relaxed opacity-90">
@@ -43,7 +43,7 @@ export default async function CategoriesPage() {
                       alt={category.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-primary/80 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-primary-foreground">
                       <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
                       {category.description && (
