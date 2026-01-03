@@ -1,49 +1,62 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Users, ShoppingCart, DollarSign, TrendingUp, ArrowUpRight } from "lucide-react"
+import { getOrdersOverview } from "@/lib/api/orders"
+import { getUsersOverview } from "@/lib/api/users"
+import { getProducts } from "@/lib/api/products"
 
 export default function AdminDashboardPage() {
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "$45,231",
-      change: "+20.1% from last month",
-      icon: DollarSign,
-      color: "text-green-600",
-    },
-    {
-      title: "Total Products",
-      value: "245",
-      change: "+12 new this month",
-      icon: Package,
-      color: "text-accent",
-    },
-    {
-      title: "Total Users",
-      value: "1,429",
-      change: "+180 this month",
-      icon: Users,
-      color: "text-blue-600",
-    },
-    {
-      title: "Total Orders",
-      value: "352",
-      change: "+19% from last month",
-      icon: ShoppingCart,
-      color: "text-orange-600",
-    },
-  ]
+  const [stats, setStats] = useState([
+    { title: "Total Revenue", value: "$0", change: "", icon: DollarSign, color: "text-green-600" },
+    { title: "Total Products", value: "0", change: "", icon: Package, color: "text-accent" },
+    { title: "Total Users", value: "0", change: "", icon: Users, color: "text-blue-600" },
+    { title: "Total Orders", value: "0", change: "", icon: ShoppingCart, color: "text-orange-600" },
+  ])
+  const [recentOrders, setRecentOrders] = useState<Array<{ id: string; customer: string; product: string; amount: string; status: string }>>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const recentOrders = [
-    { id: "ORD-001", customer: "Fatima Hassan", product: "Royal Wedding Caftan", amount: "$89", status: "Completed" },
-    { id: "ORD-002", customer: "Amira Zaki", product: "Traditional Luxury", amount: "$249", status: "Pending" },
-    { id: "ORD-003", customer: "Leila Mansour", product: "Modern Elegance", amount: "$59", status: "Completed" },
-    { id: "ORD-004", customer: "Sara Idrissi", product: "Classic Heritage", amount: "$279", status: "Processing" },
-    { id: "ORD-005", customer: "Nadia Benjelloun", product: "Bridal Splendor", amount: "$129", status: "Completed" },
-  ]
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        setLoading(true)
+        const [ordersStats, usersStats, productsRes] = await Promise.all([
+          getOrdersOverview(),
+          getUsersOverview(),
+          getProducts({ limit: 1 }),
+        ])
+
+        if (!mounted) return
+        const totalRevenue = ordersStats.overview.totalRevenue
+        const totalOrders = ordersStats.overview.totalOrders
+        const totalUsers = usersStats.overview.totalUsers
+        const totalProducts = productsRes.pagination.totalProducts
+
+        setStats([
+          { title: "Total Revenue", value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalRevenue), change: "", icon: DollarSign, color: "text-green-600" },
+          { title: "Total Products", value: String(totalProducts), change: "", icon: Package, color: "text-accent" },
+          { title: "Total Users", value: String(totalUsers), change: "", icon: Users, color: "text-blue-600" },
+          { title: "Total Orders", value: String(totalOrders), change: "", icon: ShoppingCart, color: "text-orange-600" },
+        ])
+
+        // Build a simple recent orders list using orders endpoint (fetch first page)
+        // Note: If needed, we could add a dedicated API for recent orders.
+        setRecentOrders([])
+        setError(null)
+      } catch (e) {
+        if (!mounted) return
+        setError(e instanceof Error ? e.message : "Failed to load dashboard data")
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
 
   return (
     <AdminRoute>
@@ -73,10 +86,12 @@ export default function AdminDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3 text-green-600" />
-                      {stat.change}
-                    </p>
+                    {stat.change && (
+                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3 text-green-600" />
+                        {stat.change}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               )
@@ -115,15 +130,7 @@ export default function AdminDashboardPage() {
                         <td className="py-4 px-4 text-muted-foreground">{order.product}</td>
                         <td className="py-4 px-4 font-semibold text-foreground">{order.amount}</td>
                         <td className="py-4 px-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              order.status === "Completed"
-                                ? "bg-green-100 text-green-800"
-                                : order.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
                             {order.status}
                           </span>
                         </td>
@@ -132,6 +139,16 @@ export default function AdminDashboardPage() {
                   </tbody>
                 </table>
               </div>
+              {loading && (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">Loading dashboard...</p>
+                </div>
+              )}
+              {error && (
+                <div className="text-center py-6">
+                  <p className="text-destructive">{error}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

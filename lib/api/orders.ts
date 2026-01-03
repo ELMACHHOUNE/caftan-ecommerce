@@ -271,3 +271,27 @@ export const updateOrderStatus = async (orderId: string, payload: { status: Orde
     throw new Error(error instanceof Error ? error.message : 'Failed to update order status')
   }
 }
+
+// Admin: order overview stats
+export interface OrdersOverviewStats {
+  overview: {
+    totalOrders: number
+    pendingOrders: number
+    deliveredOrders: number
+    cancelledOrders: number
+    totalRevenue: number
+  }
+  revenueTrends: Array<{ _id: { year: number; month: number }; revenue: number; orders: number }>
+}
+
+export const getOrdersOverview = async (): Promise<OrdersOverviewStats> => {
+  try {
+    const response = await apiClient.get<OrdersOverviewStats>('/orders/stats/overview')
+    if (response.status === 'success' && response.data) {
+      return response.data
+    }
+    throw new Error(response.message || 'Failed to fetch order stats')
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch order stats')
+  }
+}
