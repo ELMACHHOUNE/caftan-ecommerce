@@ -107,6 +107,7 @@ export interface OrdersResponse {
     totalPages: number
     totalOrders: number
     hasMore: boolean
+    hasPrev?: boolean
   }
 }
 
@@ -132,6 +133,40 @@ export const getUserOrders = async (params?: {
     
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.limit) queryParams.append('limit', params.limit.toString())
+
+  // Map server order to client-normalized shape
+  const mapOrder = (s: ServerOrder): Order => {
+    return {
+      id: s._id,
+      user: s.user,
+      orderItems: s.orderItems?.map((item: any) => ({
+        product: item.product?._id || item.product,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        sku: item.sku,
+      })) || [],
+      shippingAddress: s.shippingAddress,
+      paymentMethod: s.paymentMethod,
+      paymentResult: s.paymentResult,
+      subtotal: s.subtotal,
+      tax: s.taxAmount,
+      shippingPrice: s.shippingCost,
+      totalPrice: s.totalAmount,
+      isPaid: s.isPaid,
+      paidAt: s.paidAt,
+      isDelivered: s.isDelivered,
+      deliveredAt: s.deliveredAt,
+      status: s.orderStatus,
+      trackingNumber: s.trackingNumber,
+      estimatedDelivery: s.estimatedDelivery,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }
+  }
     if (params?.status) queryParams.append('status', params.status)
     
     const query = queryParams.toString()

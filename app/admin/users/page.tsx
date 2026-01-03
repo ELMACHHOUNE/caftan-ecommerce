@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Eye, Trash2, Mail } from "lucide-react"
-import { getUsers, type AdminUser } from "@/lib/api/users"
+import { getUsers, deleteUser, updateUser, type AdminUser } from "@/lib/api/users"
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -42,6 +42,25 @@ export default function AdminUsersPage() {
         user.email.toLowerCase().includes(searchQuery.toLowerCase()),
     )
   }, [users, searchQuery])
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this user?")) return
+    try {
+      await deleteUser(id)
+      setUsers((prev) => prev.filter((u) => u.id !== id))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete user")
+    }
+  }
+
+  const handleToggleActive = async (user: AdminUser) => {
+    try {
+      const updated = await updateUser(user.id, { isActive: !user.isActive })
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to update user status")
+    }
+  }
 
   return (
     <AdminRoute>
@@ -110,10 +129,10 @@ export default function AdminUsersPage() {
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleToggleActive(user)}>
                               <Mail className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDelete(user.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

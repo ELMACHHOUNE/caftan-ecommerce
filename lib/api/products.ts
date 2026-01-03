@@ -166,7 +166,7 @@ export const addProductReview = async (
 }
 
 // Admin: Create product
-export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
+export const createProduct = async (productData: Partial<Product> | FormData): Promise<Product> => {
   try {
     const response = await apiClient.post<{ product: Product }>('/products', productData)
     
@@ -181,7 +181,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
 }
 
 // Admin: Update product
-export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product> => {
+export const updateProduct = async (id: string, productData: Partial<Product> | FormData): Promise<Product> => {
   try {
     const response = await apiClient.put<{ product: Product }>(`/products/${id}`, productData)
     

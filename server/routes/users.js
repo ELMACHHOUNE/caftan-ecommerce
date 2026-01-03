@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const User = require('../models/User');
 const { auth, admin } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -126,7 +127,7 @@ router.get('/:id', [auth, admin], async (req, res) => {
 // @desc    Update user (Admin only)
 // @route   PUT /api/users/:id
 // @access  Private/Admin
-router.put('/:id', [auth, admin], [
+router.put('/:id', [auth, admin, upload.single('avatar')], [
   body('name')
     .optional()
     .trim()
@@ -192,6 +193,12 @@ router.put('/:id', [auth, admin], [
     if (isActive !== undefined) user.isActive = isActive;
     if (phone) user.phone = phone;
     if (address) user.address = { ...user.address, ...address };
+
+    // Handle avatar upload
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      user.avatar = `${baseUrl}/uploads/${req.file.filename}`
+    }
 
     await user.save();
 

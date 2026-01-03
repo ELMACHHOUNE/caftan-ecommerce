@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { AdminRoute } from "@/components/auth/ProtectedRoute"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,25 +10,45 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { getSettings, updateSettings, type StoreSettings } from "@/lib/api/settings"
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState({
-    storeName: "Aguizoul Caftan",
-    storeEmail: "info@caftanelegance.com",
-    storePhone: "+212 5XX-XXXXXX",
-    storeAddress: "123 Medina Street, Casablanca, Morocco",
-    currency: "USD",
-    taxRate: "20",
-    emailNotifications: true,
-    orderNotifications: true,
-    inventoryAlerts: true,
-    maintenanceMode: false,
-  })
+  const [settings, setSettings] = useState<StoreSettings | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        setLoading(true)
+        const s = await getSettings()
+        if (!mounted) return
+        setSettings(s)
+        setError(null)
+      } catch (e) {
+        if (!mounted) return
+        setError(e instanceof Error ? e.message : 'Failed to load settings')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Settings saved:", settings)
-    // Handle save logic
+    if (!settings) return
+    try {
+      setLoading(true)
+      const updated = await updateSettings(settings)
+      setSettings(updated)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save settings')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -55,13 +75,15 @@ export default function AdminSettingsPage() {
                 <CardDescription>Basic information about your store</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {loading && <p className="text-sm text-muted-foreground">Loading settings...</p>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="storeName">Store Name</Label>
                     <Input
                       id="storeName"
-                      value={settings.storeName}
-                      onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
+                      value={settings?.storeName || ''}
+                      onChange={(e) => settings && setSettings({ ...settings, storeName: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -69,8 +91,8 @@ export default function AdminSettingsPage() {
                     <Input
                       id="storeEmail"
                       type="email"
-                      value={settings.storeEmail}
-                      onChange={(e) => setSettings({ ...settings, storeEmail: e.target.value })}
+                      value={settings?.storeEmail || ''}
+                      onChange={(e) => settings && setSettings({ ...settings, storeEmail: e.target.value })}
                     />
                   </div>
                 </div>
@@ -79,16 +101,16 @@ export default function AdminSettingsPage() {
                     <Label htmlFor="storePhone">Store Phone</Label>
                     <Input
                       id="storePhone"
-                      value={settings.storePhone}
-                      onChange={(e) => setSettings({ ...settings, storePhone: e.target.value })}
+                      value={settings?.storePhone || ''}
+                      onChange={(e) => settings && setSettings({ ...settings, storePhone: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency</Label>
                     <Input
                       id="currency"
-                      value={settings.currency}
-                      onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+                      value={settings?.currency || ''}
+                      onChange={(e) => settings && setSettings({ ...settings, currency: e.target.value })}
                     />
                   </div>
                 </div>
@@ -96,8 +118,8 @@ export default function AdminSettingsPage() {
                   <Label htmlFor="storeAddress">Store Address</Label>
                   <Textarea
                     id="storeAddress"
-                    value={settings.storeAddress}
-                    onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })}
+                    value={settings?.storeAddress || ''}
+                    onChange={(e) => settings && setSettings({ ...settings, storeAddress: e.target.value })}
                     rows={3}
                   />
                 </div>
@@ -116,8 +138,8 @@ export default function AdminSettingsPage() {
                   <Input
                     id="taxRate"
                     type="number"
-                    value={settings.taxRate}
-                    onChange={(e) => setSettings({ ...settings, taxRate: e.target.value })}
+                    value={settings?.taxRate ?? 0}
+                    onChange={(e) => settings && setSettings({ ...settings, taxRate: Number(e.target.value) })}
                   />
                 </div>
               </CardContent>
@@ -136,8 +158,8 @@ export default function AdminSettingsPage() {
                     <p className="text-sm text-muted-foreground">Receive email updates about your store</p>
                   </div>
                   <Switch
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+                    checked={settings?.emailNotifications || false}
+                    onCheckedChange={(checked) => settings && setSettings({ ...settings, emailNotifications: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -146,8 +168,8 @@ export default function AdminSettingsPage() {
                     <p className="text-sm text-muted-foreground">Get notified when new orders are placed</p>
                   </div>
                   <Switch
-                    checked={settings.orderNotifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, orderNotifications: checked })}
+                    checked={settings?.orderNotifications || false}
+                    onCheckedChange={(checked) => settings && setSettings({ ...settings, orderNotifications: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -156,8 +178,8 @@ export default function AdminSettingsPage() {
                     <p className="text-sm text-muted-foreground">Alerts when products are running low</p>
                   </div>
                   <Switch
-                    checked={settings.inventoryAlerts}
-                    onCheckedChange={(checked) => setSettings({ ...settings, inventoryAlerts: checked })}
+                    checked={settings?.inventoryAlerts || false}
+                    onCheckedChange={(checked) => settings && setSettings({ ...settings, inventoryAlerts: checked })}
                   />
                 </div>
               </CardContent>
@@ -176,8 +198,8 @@ export default function AdminSettingsPage() {
                     <p className="text-sm text-muted-foreground">Enable to show maintenance page to customers</p>
                   </div>
                   <Switch
-                    checked={settings.maintenanceMode}
-                    onCheckedChange={(checked) => setSettings({ ...settings, maintenanceMode: checked })}
+                    checked={settings?.maintenanceMode || false}
+                    onCheckedChange={(checked) => settings && setSettings({ ...settings, maintenanceMode: checked })}
                   />
                 </div>
               </CardContent>
@@ -185,10 +207,10 @@ export default function AdminSettingsPage() {
 
             {/* Save Button */}
             <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" className="bg-transparent">
+              <Button type="button" variant="outline" className="bg-transparent" onClick={() => setSettings(settings)}>
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
             </div>
           </form>
         </div>

@@ -3,6 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const { auth, admin, optionalAuth } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -166,7 +167,7 @@ router.get('/:id', async (req, res) => {
 // @desc    Create new product
 // @route   POST /api/products
 // @access  Private/Admin
-router.post('/', [auth, admin], [
+router.post('/', [auth, admin, upload.single('image')], [
   body('name')
     .trim()
     .isLength({ min: 2, max: 100 })
@@ -205,9 +206,17 @@ router.post('/', [auth, admin], [
       });
     }
 
+    const body = req.body
+    // If file uploaded, set local uploads URL
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      body.images = [{ url: imageUrl }]
+    }
+
     // Create product
     const product = new Product({
-      ...req.body,
+      ...body,
       createdBy: req.user.id
     });
 
@@ -235,7 +244,7 @@ router.post('/', [auth, admin], [
 // @desc    Update product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put('/:id', [auth, admin], [
+router.put('/:id', [auth, admin, upload.single('image')], [
   body('name')
     .optional()
     .trim()
@@ -281,9 +290,16 @@ router.put('/:id', [auth, admin], [
       }
     }
 
+    const updateData = { ...req.body }
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      updateData.images = [{ url: imageUrl }]
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('category', 'name slug').populate('createdBy', 'name');
     

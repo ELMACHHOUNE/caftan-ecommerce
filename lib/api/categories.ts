@@ -84,19 +84,23 @@ export const getCategoriesWithCounts = async (): Promise<Category[]> => {
 }
 
 // Admin: Create category
-export const createCategory = async (categoryData: {
-  name: string
-  description?: string
-  parentCategory?: string
-  sortOrder?: number
-  image?: {
-    url: string
-    public_id?: string
-    alt?: string
-  }
-  metaTitle?: string
-  metaDescription?: string
-}): Promise<Category> => {
+export const createCategory = async (
+  categoryData:
+    | {
+        name: string
+        description?: string
+        parentCategory?: string
+        sortOrder?: number
+        image?: {
+          url: string
+          public_id?: string
+          alt?: string
+        }
+        metaTitle?: string
+        metaDescription?: string
+      }
+    | FormData,
+): Promise<Category> => {
   try {
     const response = await apiClient.post<{ category: Category }>('/categories', categoryData)
     
@@ -111,7 +115,7 @@ export const createCategory = async (categoryData: {
 }
 
 // Admin: Update category
-export const updateCategory = async (id: string, categoryData: Partial<Category>): Promise<Category> => {
+export const updateCategory = async (id: string, categoryData: Partial<Category> | FormData): Promise<Category> => {
   try {
     const response = await apiClient.put<{ category: Category }>(`/categories/${id}`, categoryData)
     

@@ -3,6 +3,7 @@ const { body, validationResult, query } = require('express-validator');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 const { auth, admin } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -136,7 +137,7 @@ router.get('/:id', async (req, res) => {
 // @desc    Create new category
 // @route   POST /api/categories
 // @access  Private/Admin
-router.post('/', [auth, admin], [
+router.post('/', [auth, admin, upload.single('image')], [
   body('name')
     .trim()
     .isLength({ min: 2, max: 50 })
@@ -188,8 +189,15 @@ router.post('/', [auth, admin], [
       }
     }
 
+    const body = req.body
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      body.image = { url: imageUrl }
+    }
+
     // Create category
-    const category = new Category(req.body);
+    const category = new Category(body);
     await category.save();
 
     // If this is a subcategory, add it to parent's subcategories array
@@ -221,7 +229,7 @@ router.post('/', [auth, admin], [
 // @desc    Update category
 // @route   PUT /api/categories/:id
 // @access  Private/Admin
-router.put('/:id', [auth, admin], [
+router.put('/:id', [auth, admin, upload.single('image')], [
   body('name')
     .optional()
     .trim()
@@ -301,9 +309,16 @@ router.put('/:id', [auth, admin], [
     }
 
     // Update category
+    const updateData = { ...req.body }
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      updateData.image = { url: imageUrl }
+    }
+
     const updatedCategory = await Category.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('parentCategory', 'name slug').populate('subcategories', 'name slug');
 

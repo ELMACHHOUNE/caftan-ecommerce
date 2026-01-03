@@ -87,7 +87,7 @@ export function Navbar() {
                       My Orders
                     </Link>
                   </DropdownMenuItem>
-                  {user?.role === 'admin' && user?.email === 'business.aguizoul@gmail.com' && (
+                  {user?.role === 'admin' && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">
                         <Settings className="mr-2 h-4 w-4" />
@@ -186,7 +186,7 @@ export function Navbar() {
                       My Orders
                     </Button>
                   </Link>
-                  {user?.role === 'admin' && user?.email === 'business.aguizoul@gmail.com' && (
+                  {user?.role === 'admin' && (
                     <Link href="/admin" className="block" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="outline" className="w-full bg-transparent">
                         <Settings className="mr-2 h-4 w-4" />

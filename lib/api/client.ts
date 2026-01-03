@@ -68,10 +68,11 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const token = getToken()
     
+    const isFormData = typeof window !== 'undefined' && options && (options as any).body instanceof FormData
     const config: RequestInit = {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
@@ -114,18 +115,20 @@ class ApiClient {
   }
 
   async post<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+    const isFormData = typeof window !== 'undefined' && data instanceof FormData
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     })
   }
 
   async put<T = any>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> {
+    const isFormData = typeof window !== 'undefined' && data instanceof FormData
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     })
   }
 

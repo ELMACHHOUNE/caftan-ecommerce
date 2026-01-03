@@ -7,13 +7,30 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Edit, Trash2, Eye } from "lucide-react"
-import { getProducts, type Product } from "@/lib/api/products"
+import { getProducts, createProduct, updateProduct, deleteProduct, type Product } from "@/lib/api/products"
+import { getCategories, type Category } from "@/lib/api/categories"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    stock: "",
+    imageUrl: "",
+    onSale: false,
+    salePrice: "",
+    featured: false,
+  })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -34,9 +51,125 @@ export default function AdminProductsPage() {
     return () => { mounted = false }
   }, [])
 
+  // Load categories for the form
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const cats = await getCategories()
+        if (!mounted) return
+        setCategories(cats)
+      } catch (_) {
+        // ignore; form will show empty list
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => product.name.toLowerCase().includes(searchQuery.toLowerCase()))
   }, [products, searchQuery])
+
+  const openCreateModal = () => {
+    setEditingProduct(null)
+    setForm({
+      name: "",
+      description: "",
+      price: "",
+      category: categories[0]?._id || "",
+      stock: "",
+      imageUrl: "",
+      onSale: false,
+      salePrice: "",
+      featured: false,
+    })
+    setImageFile(null)
+    setIsOpen(true)
+  }
+
+  const openEditModal = (p: Product) => {
+    setEditingProduct(p)
+    setForm({
+      name: p.name || "",
+      description: p.description || "",
+      price: String(p.price ?? ""),
+      category: p.category?._id || "",
+      stock: String(p.stock ?? ""),
+      imageUrl: p.images?.[0]?.url || "",
+      onSale: !!p.onSale,
+      salePrice: p.salePrice ? String(p.salePrice) : "",
+      featured: !!p.featured,
+    })
+    setImageFile(null)
+    setIsOpen(true)
+  }
+
+  const handleSubmit = async () => {
+    try {
+      const baseValidation = !!form.name && !!form.description && !!form.price && !!form.category && form.stock !== ""
+      if (!baseValidation) {
+        setError("Please fill all required fields")
+        return
+      }
+      const shouldUseFormData = !!imageFile
+      if (shouldUseFormData) {
+        const fd = new FormData()
+        fd.append('name', form.name.trim())
+        fd.append('description', form.description.trim())
+        fd.append('price', String(Number(form.price)))
+        fd.append('category', form.category)
+        fd.append('stock', String(Number(form.stock)))
+        fd.append('featured', String(!!form.featured))
+        fd.append('onSale', String(!!form.onSale))
+        if (form.onSale && form.salePrice) {
+          fd.append('salePrice', String(Number(form.salePrice)))
+        }
+        if (imageFile) {
+          fd.append('image', imageFile)
+        }
+        if (editingProduct) {
+          const updated = await updateProduct(editingProduct._id, fd as any)
+          setProducts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)))
+        } else {
+          const created = await createProduct(fd as any)
+          setProducts((prev) => [created, ...prev])
+        }
+      } else {
+        const payload: Partial<Product> = {
+          name: form.name.trim(),
+          description: form.description.trim(),
+          price: Number(form.price),
+          category: form.category as any,
+          stock: Number(form.stock),
+          images: form.imageUrl ? [{ url: form.imageUrl }] : [],
+          onSale: !!form.onSale,
+          salePrice: form.onSale && form.salePrice ? Number(form.salePrice) : undefined,
+          featured: !!form.featured,
+        }
+        if (editingProduct) {
+          const updated = await updateProduct(editingProduct._id, payload)
+          setProducts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)))
+        } else {
+          const created = await createProduct(payload)
+          setProducts((prev) => [created, ...prev])
+        }
+      }
+      setIsOpen(false)
+      setEditingProduct(null)
+      setImageFile(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save product')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProduct(id)
+      setProducts((prev) => prev.filter((p) => p._id !== id))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete product')
+    }
+  }
 
   return (
     <AdminRoute>
@@ -52,7 +185,7 @@ export default function AdminProductsPage() {
                 <h1 className="text-3xl font-bold text-primary">Product Management</h1>
                 <p className="text-muted-foreground mt-2">Manage your caftan inventory and listings</p>
               </div>
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={openCreateModal}>
                 <Plus className="h-4 w-4" />
                 Add New Product
               </Button>
@@ -116,13 +249,15 @@ export default function AdminProductsPage() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
+                            <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <a href={`/products/${product._id}`}>
+                                <Eye className="h-4 w-4" />
+                              </a>
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEditModal(product)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDelete(product._id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -150,6 +285,80 @@ export default function AdminProductsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Create/Edit Product Modal */}
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <div className="hidden" />
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+                <DialogDescription>
+                  {editingProduct ? "Update product details and save changes." : "Fill in the details to add a new product."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Name</label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Product name" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Description</label>
+                  <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Short description" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Price</label>
+                    <Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="e.g. 199" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Stock</label>
+                    <Input type="number" min={0} value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="e.g. 10" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Category</label>
+                  <select
+                    className="w-full rounded-md border-2 border-border bg-background p-2"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Product Image</label>
+                  <div className="space-y-2">
+                    <Input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+                    <p className="text-xs text-muted-foreground">Upload an image file. You can still provide an image URL below as a fallback.</p>
+                    <Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://... (optional)" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} />
+                    Featured
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.onSale} onChange={(e) => setForm({ ...form, onSale: e.target.checked })} />
+                    On Sale
+                  </label>
+                  <div>
+                    <Input type="number" min={0} disabled={!form.onSale} value={form.salePrice} onChange={(e) => setForm({ ...form, salePrice: e.target.value })} placeholder="Sale price" />
+                  </div>
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setIsOpen(false); setEditingProduct(null) }}>Cancel</Button>
+                <Button onClick={handleSubmit}>{editingProduct ? "Save Changes" : "Create Product"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>

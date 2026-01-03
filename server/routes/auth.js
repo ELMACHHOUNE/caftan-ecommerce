@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -212,7 +213,7 @@ router.get('/me', auth, async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
-router.put('/profile', auth, [
+router.put('/profile', [auth, upload.single('avatar')], [
   body('name')
     .optional()
     .trim()
@@ -249,7 +250,21 @@ router.put('/profile', auth, [
     // Update fields
     if (name) user.name = name;
     if (phone) user.phone = phone;
-    if (address) user.address = { ...user.address, ...address };
+    let parsedAddress = address
+    if (typeof parsedAddress === 'string') {
+      try {
+        parsedAddress = JSON.parse(parsedAddress)
+      } catch (_) {
+        parsedAddress = undefined
+      }
+    }
+    if (parsedAddress) user.address = { ...user.address, ...parsedAddress };
+
+    // If avatar file uploaded, set local uploads URL
+    if (req.file && req.file.filename) {
+      const baseUrl = `${req.protocol}://${req.get('host')}`
+      user.avatar = `${baseUrl}/uploads/${req.file.filename}`
+    }
 
     await user.save();
 

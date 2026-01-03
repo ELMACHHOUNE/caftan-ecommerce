@@ -8,6 +8,7 @@ import { Package, Users, ShoppingCart, DollarSign, TrendingUp, ArrowUpRight } fr
 import { getOrdersOverview } from "@/lib/api/orders"
 import { getUsersOverview } from "@/lib/api/users"
 import { getProducts } from "@/lib/api/products"
+import { getSettings } from "@/lib/api/settings"
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState([
@@ -19,16 +20,18 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<Array<{ id: string; customer: string; product: string; amount: string; status: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currency, setCurrency] = useState<string>('USD')
 
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
         setLoading(true)
-        const [ordersStats, usersStats, productsRes] = await Promise.all([
+        const [ordersStats, usersStats, productsRes, settingsRes] = await Promise.all([
           getOrdersOverview(),
           getUsersOverview(),
           getProducts({ limit: 1 }),
+          getSettings(),
         ])
 
         if (!mounted) return
@@ -37,8 +40,9 @@ export default function AdminDashboardPage() {
         const totalUsers = usersStats.overview.totalUsers
         const totalProducts = productsRes.pagination.totalProducts
 
+        setCurrency(settingsRes.currency || 'USD')
         setStats([
-          { title: "Total Revenue", value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalRevenue), change: "", icon: DollarSign, color: "text-green-600" },
+          { title: "Total Revenue", value: new Intl.NumberFormat('en-US', { style: 'currency', currency: settingsRes.currency || 'USD' }).format(totalRevenue), change: "", icon: DollarSign, color: "text-green-600" },
           { title: "Total Products", value: String(totalProducts), change: "", icon: Package, color: "text-accent" },
           { title: "Total Users", value: String(totalUsers), change: "", icon: Users, color: "text-blue-600" },
           { title: "Total Orders", value: String(totalOrders), change: "", icon: ShoppingCart, color: "text-orange-600" },

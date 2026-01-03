@@ -75,17 +75,21 @@ export const getCurrentUser = async (): Promise<User> => {
 }
 
 // Update user profile
-export const updateProfile = async (profileData: {
-  name?: string
-  phone?: string
-  address?: {
-    street?: string
-    city?: string
-    state?: string
-    zipCode?: string
-    country?: string
-  }
-}): Promise<User> => {
+export const updateProfile = async (
+  profileData:
+    | {
+        name?: string
+        phone?: string
+        address?: {
+          street?: string
+          city?: string
+          state?: string
+          zipCode?: string
+          country?: string
+        }
+      }
+    | FormData,
+): Promise<User> => {
   try {
     const response = await apiClient.put<{ user: User }>('/auth/profile', profileData)
     

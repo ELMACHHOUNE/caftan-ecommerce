@@ -35,6 +35,7 @@ export default function ProfilePage() {
       country: ""
     }
   })
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
   // Initialize form data when user changes
   useEffect(() => {
@@ -60,16 +61,30 @@ export default function ProfilePage() {
     setIsSaving(true)
 
     try {
-      const updateData = {
-        name: formData.name,
-        phone: formData.phone || undefined,
-        address: formData.address.street || formData.address.city ? formData.address : undefined
+      let responseUser
+      if (avatarFile) {
+        const fd = new FormData()
+        fd.append('name', formData.name)
+        if (formData.phone) fd.append('phone', formData.phone)
+        const hasAddress = formData.address.street || formData.address.city || formData.address.state || formData.address.zipCode || formData.address.country
+        if (hasAddress) fd.append('address', JSON.stringify(formData.address))
+        fd.append('avatar', avatarFile)
+        const response = await updateProfile(fd as any)
+        responseUser = response
+      } else {
+        const updateData = {
+          name: formData.name,
+          phone: formData.phone || undefined,
+          address: formData.address.street || formData.address.city ? formData.address : undefined
+        }
+        const response = await updateProfile(updateData)
+        responseUser = response
       }
-
-      const response = await updateProfile(updateData)
-      updateUser(response.user)
+      const response = { user: responseUser } as any
+      updateUser(responseUser as any)
       setSuccess("Profile updated successfully!")
       setIsEditing(false)
+      setAvatarFile(null)
       
       // Refetch user to ensure we have the latest data
       setTimeout(() => {
@@ -233,6 +248,14 @@ export default function ProfilePage() {
                               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                               disabled={isSaving}
                             />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-base font-medium">Profile Picture</Label>
+                          <div className="mt-2 space-y-2">
+                            <Input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
+                            <p className="text-xs text-muted-foreground">Upload a new avatar image (optional).</p>
                           </div>
                         </div>
 
