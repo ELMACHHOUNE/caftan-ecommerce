@@ -19,10 +19,8 @@ const settingsRoutes = require('./routes/settings');
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
 
-// Security middleware (allow cross-origin resource loading for images)
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
-}));
+// Security middleware
+app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -42,19 +40,11 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  setHeaders: (res) => {
-    // Allow images to be embedded from the Next.js origin
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    // Optional: enable broader CORS for static files
-    if (process.env.FRONTEND_URL) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
-    } else {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-    }
-  }
-}));
+// Serve uploaded files statically with permissive CORP for cross-origin usage (e.g., Next.js dev on :3000)
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
