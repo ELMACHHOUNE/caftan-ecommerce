@@ -8,6 +8,13 @@ require('dotenv').config();
 
 const app = express();
 
+// Basic env validation to surface misconfiguration early
+const requiredEnv = ['MONGODB_URI', 'JWT_SECRET'];
+const missingEnv = requiredEnv.filter((k) => !process.env[k]);
+if (missingEnv.length) {
+  console.warn(`Missing required environment variables: ${missingEnv.join(', ')}. Some features may fail.`);
+}
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -15,6 +22,7 @@ const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
 const settingsRoutes = require('./routes/settings');
+const contactRoutes = require('./routes/contact');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -53,6 +61,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -63,16 +72,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware (must be last)
-app.use(errorHandler);
-
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler (Express 5 compatible: no '*' wildcard)
+app.use((req, res) => {
   res.status(404).json({
     status: 'error',
     message: `Route ${req.originalUrl} not found`
   });
 });
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 // Error handling for uncaught exceptions
 process.on('uncaughtException', (err) => {

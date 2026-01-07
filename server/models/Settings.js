@@ -5,7 +5,7 @@ const SettingsSchema = new mongoose.Schema({
   storeEmail: { type: String, default: 'info@caftanelegance.com', trim: true },
   storePhone: { type: String, default: '+212 5XX-XXXXXX', trim: true },
   storeAddress: { type: String, default: '123 Medina Street, Casablanca, Morocco', trim: true },
-  currency: { type: String, default: 'USD', trim: true },
+  currency: { type: String, default: 'MAD', trim: true },
   taxRate: { type: Number, default: 20 },
   emailNotifications: { type: Boolean, default: true },
   orderNotifications: { type: Boolean, default: true },

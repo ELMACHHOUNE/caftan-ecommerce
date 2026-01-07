@@ -260,7 +260,7 @@ export const formatOrderStatus = (status: string): { label: string; color: strin
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'MAD'
   }).format(price)
 }
 

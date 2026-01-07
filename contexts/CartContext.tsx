@@ -74,11 +74,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     const itemId = `${newItem.id}-${newItem.type}-${newItem.size || 'default'}`
     
     setItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(item => 
-        item.id === newItem.id && 
-        item.type === newItem.type && 
-        item.size === newItem.size
-      )
+      const existingItemIndex = prevItems.findIndex(item => item.id === itemId)
 
       if (existingItemIndex > -1) {
         // Update existing item quantity

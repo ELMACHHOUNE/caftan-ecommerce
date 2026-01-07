@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Mail, Phone, MapPin, Instagram, Facebook } from "lucide-react"
 import { useState } from "react"
+import { sendContactMessage } from "@/lib/api/contact"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -19,11 +20,25 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string>("")
+  const [success, setSuccess] = useState<string>("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    // Handle form submission
+    setError("")
+    setSuccess("")
+    setIsSubmitting(true)
+    try {
+      await sendContactMessage(formData)
+      setSuccess("Message sent successfully. We will contact you shortly.")
+      setFormData({ name: "", email: "", subject: "", message: "" })
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to send message'
+      setError(msg)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -52,6 +67,12 @@ export default function ContactPage() {
                     <CardTitle className="text-3xl text-primary">Send us a Message</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {error && (
+                      <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">{error}</div>
+                    )}
+                    {success && (
+                      <div className="mb-4 p-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md">{success}</div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -97,8 +118,8 @@ export default function ContactPage() {
                           required
                         />
                       </div>
-                      <Button type="submit" size="lg" className="w-full">
-                        Send Message
+                      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Sending...' : 'Send Message'}
                       </Button>
                     </form>
                   </CardContent>

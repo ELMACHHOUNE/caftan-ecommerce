@@ -10,6 +10,7 @@ import { Plus, Search, Edit, Trash2, Eye } from "lucide-react"
 import { getProducts, createProduct, updateProduct, deleteProduct, type Product } from "@/lib/api/products"
 import { getCategories, type Category } from "@/lib/api/categories"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { formatCurrency } from "@/lib/utils"
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -231,8 +232,8 @@ export default function AdminProductsPage() {
                       <tr key={product._id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="py-4 px-6 font-medium text-foreground">{product.name}</td>
                         <td className="py-4 px-6 text-muted-foreground">{product.category?.name}</td>
-                        <td className="py-4 px-6 text-muted-foreground">${product.price}</td>
-                        <td className="py-4 px-6 text-muted-foreground">{product.onSale && product.salePrice ? `$${product.salePrice}` : '-'}</td>
+                        <td className="py-4 px-6 text-muted-foreground">{formatCurrency(product.price)}</td>
+                        <td className="py-4 px-6 text-muted-foreground">{product.onSale && product.salePrice ? formatCurrency(product.salePrice) : '-'}</td>
                         <td className="py-4 px-6 text-muted-foreground">{product.stock} units</td>
                         <td className="py-4 px-6">
                           <span

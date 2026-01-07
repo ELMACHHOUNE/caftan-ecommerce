@@ -4,42 +4,16 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles, Package, Clock, Shield } from "lucide-react"
+import { getFeaturedProducts, type Product } from "@/lib/api/products"
+import { formatCurrency } from "@/lib/utils"
 
-export default function HomePage() {
-  const featured = [
-    {
-      id: 1,
-      name: "Royal Wedding Caftan",
-      price: "$299",
-      rentPrice: "$89/day",
-      image: "/elegant-moroccan-caftan-purple.jpg",
-      badge: "Wedding",
-    },
-    {
-      id: 2,
-      name: "Traditional Luxury",
-      price: "$249",
-      rentPrice: "$69/day",
-      image: "/traditional-moroccan-caftan-embroidery.jpg",
-      badge: "Luxury",
-    },
-    {
-      id: 3,
-      name: "Modern Elegance",
-      price: "$199",
-      rentPrice: "$59/day",
-      image: "/modern-moroccan-caftan-purple.jpg",
-      badge: "Premium",
-    },
-    {
-      id: 4,
-      name: "Classic Heritage",
-      price: "$279",
-      rentPrice: "$79/day",
-      image: "/classic-moroccan-caftan-gold.jpg",
-      badge: "Traditional",
-    },
-  ]
+export default async function HomePage() {
+  let featured: Product[] = []
+  try {
+    featured = await getFeaturedProducts(8)
+  } catch (_) {
+    featured = []
+  }
 
   const features = [
     {
@@ -129,17 +103,17 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {featured.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
+                <Link key={product._id} href={`/products/${product._id}`}>
                   <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-2 border-border hover:border-accent">
                     <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                       <img
-                        src={product.image || "/placeholder.svg"}
+                        src={product.images?.[0]?.url || "/placeholder.svg"}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-3 right-3">
                         <span className="bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full">
-                          {product.badge}
+                          {product.category?.name || 'Featured'}
                         </span>
                       </div>
                     </div>
@@ -148,11 +122,13 @@ export default function HomePage() {
                       <div className="flex items-center justify-between text-sm">
                         <div>
                           <p className="text-muted-foreground">Buy</p>
-                          <p className="font-bold text-foreground">{product.price}</p>
+                          <p className="font-bold text-foreground">{formatCurrency(product.onSale && product.salePrice ? product.salePrice : product.price)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-muted-foreground">Rent</p>
-                          <p className="font-bold text-accent">{product.rentPrice}</p>
+                          <p className="font-bold text-accent">{/* if rent price exists */}
+                            {product as any && (product as any).rentPrice ? `${formatCurrency((product as any).rentPrice)}/day` : '—'}
+                          </p>
                         </div>
                       </div>
                     </CardContent>

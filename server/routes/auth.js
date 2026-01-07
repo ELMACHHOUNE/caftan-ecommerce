@@ -92,7 +92,7 @@ router.post('/register', registerValidation, async (req, res) => {
     console.error('Register error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error during registration'
+      message: error?.message || 'Server error during registration'
     });
   }
 });
@@ -165,7 +165,7 @@ router.post('/login', loginValidation, async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error during login'
+      message: error?.message || 'Server error during login'
     });
   }
 });
@@ -205,7 +205,7 @@ router.get('/me', auth, async (req, res) => {
     console.error('Get profile error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error'
+      message: error?.message || 'Server error'
     });
   }
 });
@@ -288,7 +288,7 @@ router.put('/profile', [auth, upload.single('avatar')], [
     console.error('Update profile error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error'
+      message: error?.message || 'Server error'
     });
   }
 });
@@ -350,7 +350,7 @@ router.put('/change-password', auth, [
     console.error('Change password error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error'
+      message: error?.message || 'Server error'
     });
   }
 });
@@ -396,7 +396,7 @@ router.get('/verify-token', (req, res) => {
     console.error('Verify token error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Server error'
+      message: error?.message || 'Server error'
     });
   }
 });

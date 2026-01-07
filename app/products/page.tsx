@@ -12,6 +12,7 @@ import Link from "next/link"
 import { SlidersHorizontal } from "lucide-react"
 import { getProducts, type Product } from "@/lib/api/products"
 import { useSearchParams } from "next/navigation"
+import { formatCurrency } from "@/lib/utils"
 
 function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([])
@@ -141,19 +142,19 @@ function ProductsContent() {
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="low" id="price-low" />
                           <Label htmlFor="price-low" className="cursor-pointer">
-                            Under $250
+                            Under {formatCurrency(250)}
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="mid" id="price-mid" />
                           <Label htmlFor="price-mid" className="cursor-pointer">
-                            $250 - $350
+                            {formatCurrency(250)} - {formatCurrency(350)}
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="high" id="price-high" />
                           <Label htmlFor="price-high" className="cursor-pointer">
-                            $350+
+                            {formatCurrency(350)}+
                           </Label>
                         </div>
                       </RadioGroup>
@@ -206,11 +207,11 @@ function ProductsContent() {
                               <p className="text-muted-foreground">Price</p>
                               {product.onSale && product.salePrice ? (
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-accent">${product.salePrice}</span>
-                                  <span className="text-muted-foreground line-through">${product.price}</span>
+                                  <span className="font-bold text-accent">{formatCurrency(product.salePrice)}</span>
+                                  <span className="text-muted-foreground line-through">{formatCurrency(product.price)}</span>
                                 </div>
                               ) : (
-                                <p className="font-bold text-foreground">${product.price}</p>
+                                <p className="font-bold text-foreground">{formatCurrency(product.price)}</p>
                               )}
                             </div>
                             <div className="text-right">

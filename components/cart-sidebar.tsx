@@ -1,21 +1,57 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { X, Plus, Minus, ShoppingBag, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { formatCurrency } from '@/lib/utils'
+import { getPublicSettings } from '@/lib/api/settings'
 
 export const CartSidebar: React.FC = () => {
   const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart, isOpen, toggleCart } = useCart()
+  const [currency, setCurrency] = useState<string>('MAD')
+  const [storePhone, setStorePhone] = useState<string>('')
 
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const settings = await getPublicSettings()
+        if (mounted) {
+          if (settings.currency) setCurrency(settings.currency)
+          if (settings.storePhone) setStorePhone(settings.storePhone)
+        }
+      } catch (err) {
+        // Keep default MAD on error
+        console.warn('Failed to load settings currency, defaulting to MAD')
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const handleCheckout = () => {
+    if (items.length === 0) return
+    const phone = (storePhone || '').replace(/\D/g, '')
+    if (!phone) {
+      alert('Store phone number is not configured.')
+      return
+    }
+    const lines = items.map(item => {
+      const unit = item.type === 'rent' && item.rentPrice ? item.rentPrice : item.price
+      const lineTotal = unit * item.quantity
+      const sizeStr = item.size ? ` (Size ${item.size})` : ''
+      return `• ${item.name}${sizeStr} x${item.quantity} — ${formatCurrency(lineTotal, currency)}`
+    })
+    const message = [
+      'Hello! I would like to order:',
+      ...lines,
+      `Total: ${formatCurrency(totalPrice, currency)}`,
+    ].join('\n')
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    window.open(url, '_blank')
   }
 
   if (!isOpen) return null
@@ -91,7 +127,7 @@ export const CartSidebar: React.FC = () => {
                             )}
                           </div>
                           <div className="text-sm font-medium text-primary mt-2">
-                            {formatPrice(item.type === 'rent' && item.rentPrice ? item.rentPrice : item.price)}
+                            {formatCurrency(item.type === 'rent' && item.rentPrice ? item.rentPrice : item.price, currency)}
                             {item.type === 'rent' && item.rentDuration && (
                               <span className="text-xs text-muted-foreground ml-1">
                                 /{item.rentDuration} days
@@ -132,7 +168,7 @@ export const CartSidebar: React.FC = () => {
                           </Button>
                         </div>
                         <div className="text-sm font-medium">
-                          Total: {formatPrice((item.type === 'rent' && item.rentPrice ? item.rentPrice : item.price) * item.quantity)}
+                          Total: {formatCurrency((item.type === 'rent' && item.rentPrice ? item.rentPrice : item.price) * item.quantity, currency)}
                         </div>
                       </div>
                     </div>
@@ -160,13 +196,11 @@ export const CartSidebar: React.FC = () => {
           <div className="border-t border-border p-6 space-y-4">
             <div className="flex items-center justify-between text-lg font-semibold">
               <span>Total:</span>
-              <span>{formatPrice(totalPrice)}</span>
+              <span>{formatCurrency(totalPrice, currency)}</span>
             </div>
             <div className="space-y-2">
-              <Button asChild className="w-full" size="lg">
-                <Link href="/checkout" onClick={toggleCart}>
-                  Proceed to Checkout
-                </Link>
+              <Button className="w-full" size="lg" onClick={handleCheckout}>
+                Proceed to Checkout
               </Button>
               <Button variant="outline" asChild className="w-full">
                 <Link href="/products" onClick={toggleCart}>

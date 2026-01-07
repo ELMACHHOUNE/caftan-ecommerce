@@ -31,3 +31,16 @@ export const updateSettings = async (payload: Partial<StoreSettings>): Promise<S
   }
   throw new Error(res.message || 'Failed to update settings')
 }
+
+export interface PublicSettings {
+  currency: string
+  storePhone: string
+}
+
+export const getPublicSettings = async (): Promise<PublicSettings> => {
+  const res = await apiClient.get<{ settings: PublicSettings }>("/settings/public")
+  if (res.status === 'success' && res.data?.settings) {
+    return res.data.settings
+  }
+  throw new Error(res.message || 'Failed to fetch public settings')
+}

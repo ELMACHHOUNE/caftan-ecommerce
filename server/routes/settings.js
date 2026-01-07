@@ -28,6 +28,23 @@ router.get('/', [auth, requireRole('admin')], async (req, res) => {
   }
 })
 
+// @desc    Get public store settings (limited fields)
+// @route   GET /api/settings/public
+// @access  Public
+router.get('/public', async (req, res) => {
+  try {
+    const settings = await getOrCreateSettings()
+    const publicSettings = {
+      currency: settings.currency,
+      storePhone: settings.storePhone,
+    }
+    res.json({ status: 'success', data: { settings: publicSettings } })
+  } catch (error) {
+    console.error('Get public settings error:', error)
+    res.status(500).json({ status: 'error', message: 'Server error' })
+  }
+})
+
 // @desc    Update store settings
 // @route   PUT /api/settings
 // @access  Private/Admin

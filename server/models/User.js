@@ -60,19 +60,14 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
+// Hash password before saving (promise-based, no `next` callback)
+userSchema.pre('save', async function() {
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare password method
@@ -83,14 +78,23 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 // Generate JWT token method
 userSchema.methods.generateAuthToken = function() {
   const jwt = require('jsonwebtoken');
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    const err = new Error('JWT_SECRET is not set. Please define it in server/.env');
+    err.name = 'ConfigError';
+    throw err;
+  }
+
+  const expiresIn = process.env.JWT_EXPIRE || '30d';
+
   return jwt.sign(
-    { 
-      id: this._id, 
-      email: this.email, 
-      role: this.role 
+    {
+      id: this._id,
+      email: this.email,
+      role: this.role
     },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE }
+    secret,
+    { expiresIn }
   );
 };
 
