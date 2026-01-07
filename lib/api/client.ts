@@ -1,4 +1,7 @@
 // API configuration and base client
+// In Next.js Server Components, `process.env.NEXT_PUBLIC_*` is inlined at build time.
+// During `next build` (especially on CI), the backend may not be running, so
+// we need to avoid hard-failing if the URL isn't reachable.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 // Types
@@ -79,7 +82,17 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, config)
+      // Add a short timeout so builds don't hang if the API is down
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        ...config,
+        signal: controller.signal,
+        // Reduce caching surprises in SSR/build
+        cache: 'no-store',
+      })
+      clearTimeout(timeout)
       
       if (!response.ok) {
         let errorData
