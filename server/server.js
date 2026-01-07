@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const { connectDB } = require('./lib/db');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -104,25 +105,24 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    
-    // Start server
-    const PORT = process.env.PORT || 5000;
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-      console.log(`Health endpoint: http://localhost:${PORT}/api/health`);
-      console.log(`API base URL: http://localhost:${PORT}/api`);
-    });
-
-    server.on('error', (err) => {
-      console.error('Server error:', err);
-    });
-  })
-  .catch(err => {
-    console.error('Database connection failed:', err);
-    process.exit(1);
-  });
+if (require.main === module) {
+  (async () => {
+    try {
+      await connectDB()
+      const PORT = process.env.PORT || 5000;
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+        console.log(`Health endpoint: http://localhost:${PORT}/api/health`);
+        console.log(`API base URL: http://localhost:${PORT}/api`);
+      });
+      server.on('error', (err) => {
+        console.error('Server error:', err);
+      });
+    } catch (err) {
+      console.error('Startup error:', err)
+      process.exit(1)
+    }
+  })()
+}
 
 module.exports = app;
