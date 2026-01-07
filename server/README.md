@@ -108,6 +108,14 @@ npm run dev
 npm start
 ````
 
+## Deploying `server/` to Vercel
+
+Vercel will run `npm run build` and then `npm start`.
+
+This server is plain JavaScript (no TypeScript compilation), so the `build` script is intentionally a no-op that exits successfully.
+
+**Important:** set `MONGODB_URI` and `JWT_SECRET` in **Vercel Project → Settings → Environment Variables**.
+
 ## API Documentation
 
 ### Authentication Endpoints
