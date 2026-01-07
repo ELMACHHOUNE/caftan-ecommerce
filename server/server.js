@@ -3,8 +3,6 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { connectDB } = require('./lib/db');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -28,16 +26,7 @@ const contactRoutes = require('./routes/contact');
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
 
-// Security middleware
-app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
-});
-app.use('/api', limiter);
+// Security middleware and rate limiting removed for serverless compatibility
 
 // CORS configuration (supports multiple origins via comma-separated FRONTEND_URL)
 const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean)
