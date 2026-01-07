@@ -1,68 +1,68 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please provide a name'],
+    required: [true, "Please provide a name"],
     trim: true,
-    maxlength: [50, 'Name cannot be more than 50 characters']
+    maxlength: [50, "Name cannot be more than 50 characters"],
   },
   email: {
     type: String,
-    required: [true, 'Please provide an email'],
+    required: [true, "Please provide an email"],
     unique: true,
     lowercase: true,
     match: [
       /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email'
-    ]
+      "Please provide a valid email",
+    ],
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't include password in queries by default
+    required: [true, "Please provide a password"],
+    minlength: [6, "Password must be at least 6 characters"],
+    select: false, // Don't include password in queries by default
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+    enum: ["user", "admin"],
+    default: "user",
   },
   avatar: {
     type: String,
-    default: ''
+    default: "",
   },
   phone: {
     type: String,
-    trim: true
+    trim: true,
   },
   address: {
     street: String,
     city: String,
     state: String,
     zipCode: String,
-    country: String
+    country: String,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   emailVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Hash password before saving (promise-based, no `next` callback)
-userSchema.pre('save', async function() {
-  if (!this.isModified('password')) {
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) {
     return;
   }
 
@@ -71,31 +71,34 @@ userSchema.pre('save', async function() {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Generate JWT token method
-userSchema.methods.generateAuthToken = function() {
-  const jwt = require('jsonwebtoken');
+userSchema.methods.generateAuthToken = function () {
+  const jwt = require("jsonwebtoken");
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    const err = new Error('JWT_SECRET is not set. Please define it in server/.env');
-    err.name = 'ConfigError';
+    const err = new Error(
+      "JWT_SECRET is not set. Please define it in server/.env"
+    );
+    err.name = "ConfigError";
     throw err;
   }
 
-  const expiresIn = process.env.JWT_EXPIRE || '30d';
+  const expiresIn =
+    process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || "30d";
 
   return jwt.sign(
     {
       id: this._id,
       email: this.email,
-      role: this.role
+      role: this.role,
     },
     secret,
     { expiresIn }
   );
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

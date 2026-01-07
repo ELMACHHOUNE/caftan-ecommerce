@@ -3,10 +3,13 @@ const path = require("path");
 const mongoose = require("mongoose");
 const { connectDB } = require("./lib/db");
 const cors = require("cors");
-// Load env only from this server package.
-// In most deployment platforms (Render, Railway, Fly.io, etc.) env vars are injected,
-// but having a local `server/.env` makes local dev + deploy packaging easier.
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+// Load env for local/dev.
+// On Vercel Serverless Functions, `process.cwd()` is usually the repo root,
+// so we try both locations.
+// In production, env vars should be set in the platform dashboard.
+const dotenv = require("dotenv");
+dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config({ path: path.join(process.cwd(), "server", ".env") });
 
 const app = express();
 

@@ -1,27 +1,38 @@
-// Minimal Vercel serverless wrapper for the Express app.
-// This file attempts a non-fatal DB connection during module init so
-// importing the function doesn't crash if the DB env isn't set.
+// Vercel Serverless Function entrypoint.
+// Important: do NOT connect to the DB at module-import time.
+// Instead, connect per-request (handles cold starts safely) and return
+// a helpful JSON error when env vars are missing.
 const serverless = require("serverless-http");
 
-// Import the Express app exported from server.js
 const app = require("../server");
 const { connectDB } = require("../lib/db");
 
-// Try to connect to the database, but don't throw on failure so the
-// function import won't crash. Errors are logged for visibility.
-(async () => {
-  try {
-    if (process.env.MONGODB_URI) {
-      await connectDB();
-      console.log("DB connection initialized in serverless wrapper");
-    } else {
-      console.warn(
-        "MONGODB_URI not set; skipping DB connection in serverless wrapper"
-      );
-    }
-  } catch (err) {
-    console.error("Non-fatal DB connect error in serverless wrapper:", err);
-  }
-})();
+const handler = serverless(app);
 
-module.exports = serverless(app);
+module.exports = async (req, res) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error("DB connect failed:", err);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.end(
+      JSON.stringify({
+        status: "error",
+        message:
+          "Server misconfigured: database connection failed. Set MONGODB_URI in Vercel project environment variables.",
+      })
+    );
+  }
+
+  try {
+    return await handler(req, res);
+  } catch (err) {
+    console.error("Handler error:", err);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    return res.end(
+      JSON.stringify({ status: "error", message: "Internal Server Error" })
+    );
+  }
+};
