@@ -28,7 +28,10 @@ const { connectDB } = require("../server/lib/db");
 
 const handler = serverless(app);
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
+  // Basic request logging for debugging in Vercel function logs
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+
   try {
     let url = req.url || "";
     // Remove leading /api/server or /api if present so the Express app
@@ -39,5 +42,26 @@ module.exports = (req, res) => {
   } catch (err) {
     console.error("Error normalizing path in root api wrapper:", err);
   }
-  return handler(req, res);
+
+  try {
+    return await handler(req, res);
+  } catch (err) {
+    // Catch synchronous or async errors from the handler to avoid
+    // the function crashing without a helpful log.
+    console.error("Handler error:", err && err.stack ? err.stack : err);
+    try {
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          status: "error",
+          message: "Internal Server Error",
+          details: err && err.message ? err.message : String(err),
+        })
+      );
+    } catch (sendErr) {
+      console.error("Error sending 500 response:", sendErr);
+    }
+    return undefined;
+  }
 };
