@@ -3,10 +3,10 @@ const path = require("path");
 const mongoose = require("mongoose");
 const { connectDB } = require("./lib/db");
 const cors = require("cors");
-// Load env from repo root first (monorepo best practice)
-require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
-// Fallback: allow a local server/.env for standalone server runs
-require("dotenv").config();
+// Load env only from this server package.
+// In most deployment platforms (Render, Railway, Fly.io, etc.) env vars are injected,
+// but having a local `server/.env` makes local dev + deploy packaging easier.
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 
@@ -35,8 +35,16 @@ const errorHandler = require("./middleware/errorHandler");
 
 // Security middleware and rate limiting removed for serverless compatibility
 
-// CORS: allow all origins (serverless + same-origin under Vercel)
-app.use(cors({ origin: true, credentials: true }));
+// CORS
+// - If CORS_ORIGIN is set, restrict to that origin.
+// - Otherwise allow all origins (simple default for local dev).
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(
+  cors({
+    origin: corsOrigin ? corsOrigin.split(",").map((s) => s.trim()) : true,
+    credentials: true,
+  })
+);
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));

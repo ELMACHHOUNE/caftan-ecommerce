@@ -1,22 +1,30 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-let isConnecting = false
+let isConnecting = false;
 
 async function connectDB() {
-  if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
-    return
+  if (!process.env.MONGODB_URI) {
+    throw new Error(
+      "MONGODB_URI is not set. Create server/.env from server/.env.example or configure env vars in your deployment platform."
+    );
   }
-  if (isConnecting) return
-  isConnecting = true
+  if (
+    mongoose.connection.readyState === 1 ||
+    mongoose.connection.readyState === 2
+  ) {
+    return;
+  }
+  if (isConnecting) return;
+  isConnecting = true;
   try {
-    await mongoose.connect(process.env.MONGODB_URI)
-    console.log('MongoDB connected')
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("MongoDB connected");
   } catch (err) {
-    console.error('MongoDB connection error:', err)
-    throw err
+    console.error("MongoDB connection error:", err);
+    throw err;
   } finally {
-    isConnecting = false
+    isConnecting = false;
   }
 }
 
-module.exports = { connectDB }
+module.exports = { connectDB };

@@ -5,18 +5,21 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
 ## Features
 
 - **Authentication & Authorization**
+
   - JWT-based authentication
   - Role-based access control (User, Admin)
   - Password hashing with bcrypt
   - Input validation and sanitization
 
 - **User Management**
+
   - User registration and login
   - Profile management
   - Admin user management
   - Password change functionality
 
 - **Product Management**
+
   - CRUD operations for products
   - Image upload support (Cloudinary integration)
   - Product reviews and ratings
@@ -24,11 +27,13 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
   - Category-based organization
 
 - **Category Management**
+
   - Hierarchical category structure
   - Parent-child relationships
   - Category-based product filtering
 
 - **Order Management**
+
   - Order creation and tracking
   - Order status management
   - Payment integration ready
@@ -63,21 +68,21 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
 ### Installation
 
 1. **Navigate to server directory:**
+
    ```bash
    cd server
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Environment Setup:**
-   - Copy `.env.example` to `.env`
-   - Update the environment variables:
-   ```bash
-   cp .env .env.local
-   ```
+
+- Copy `.env.example` to `.env` (inside the `server/` folder)
+- Update the environment variables
 
 4. **Configure Environment Variables:**
    ```env
@@ -85,76 +90,82 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
    NODE_ENV=development
    MONGODB_URI=mongodb://localhost:27017/caftan-ecommerce
    JWT_SECRET=your-super-secret-jwt-key
-   JWT_EXPIRE=30d
-   FRONTEND_URL=http://localhost:3000
+   JWT_EXPIRES_IN=7d
    ```
+
+# Optional (comma-separated). If not set, the API allows all origins.
+
+CORS_ORIGIN=http://localhost:3000
+
+````
 
 5. **Start the server:**
-   ```bash
-   # Development mode
-   npm run dev
+```bash
+# Development mode
+npm run dev
 
-   # Production mode
-   npm start
-   ```
+# Production mode
+npm start
+````
 
 ## API Documentation
 
 ### Authentication Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/api/auth/register` | Register new user | Public |
-| POST | `/api/auth/login` | User login | Public |
-| GET | `/api/auth/me` | Get current user | Private |
-| PUT | `/api/auth/profile` | Update profile | Private |
-| PUT | `/api/auth/change-password` | Change password | Private |
+| Method | Endpoint                    | Description       | Access  |
+| ------ | --------------------------- | ----------------- | ------- |
+| POST   | `/api/auth/register`        | Register new user | Public  |
+| POST   | `/api/auth/login`           | User login        | Public  |
+| GET    | `/api/auth/me`              | Get current user  | Private |
+| PUT    | `/api/auth/profile`         | Update profile    | Private |
+| PUT    | `/api/auth/change-password` | Change password   | Private |
 
 ### User Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/api/users` | Get all users | Admin |
-| GET | `/api/users/:id` | Get user by ID | Admin |
-| PUT | `/api/users/:id` | Update user | Admin |
-| DELETE | `/api/users/:id` | Delete user | Admin |
+| Method | Endpoint         | Description    | Access |
+| ------ | ---------------- | -------------- | ------ |
+| GET    | `/api/users`     | Get all users  | Admin  |
+| GET    | `/api/users/:id` | Get user by ID | Admin  |
+| PUT    | `/api/users/:id` | Update user    | Admin  |
+| DELETE | `/api/users/:id` | Delete user    | Admin  |
 
 ### Product Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/api/products` | Get all products | Public |
-| GET | `/api/products/:id` | Get product by ID | Public |
-| POST | `/api/products` | Create product | Admin |
-| PUT | `/api/products/:id` | Update product | Admin |
-| DELETE | `/api/products/:id` | Delete product | Admin |
-| POST | `/api/products/:id/reviews` | Add product review | Private |
+| Method | Endpoint                    | Description        | Access  |
+| ------ | --------------------------- | ------------------ | ------- |
+| GET    | `/api/products`             | Get all products   | Public  |
+| GET    | `/api/products/:id`         | Get product by ID  | Public  |
+| POST   | `/api/products`             | Create product     | Admin   |
+| PUT    | `/api/products/:id`         | Update product     | Admin   |
+| DELETE | `/api/products/:id`         | Delete product     | Admin   |
+| POST   | `/api/products/:id/reviews` | Add product review | Private |
 
 ### Category Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/api/categories` | Get all categories | Public |
-| GET | `/api/categories/tree` | Get category tree | Public |
-| GET | `/api/categories/:id` | Get category by ID | Public |
-| POST | `/api/categories` | Create category | Admin |
-| PUT | `/api/categories/:id` | Update category | Admin |
-| DELETE | `/api/categories/:id` | Delete category | Admin |
+| Method | Endpoint               | Description        | Access |
+| ------ | ---------------------- | ------------------ | ------ |
+| GET    | `/api/categories`      | Get all categories | Public |
+| GET    | `/api/categories/tree` | Get category tree  | Public |
+| GET    | `/api/categories/:id`  | Get category by ID | Public |
+| POST   | `/api/categories`      | Create category    | Admin  |
+| PUT    | `/api/categories/:id`  | Update category    | Admin  |
+| DELETE | `/api/categories/:id`  | Delete category    | Admin  |
 
 ### Order Endpoints
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/api/orders` | Create order | Private |
-| GET | `/api/orders/my-orders` | Get user orders | Private |
-| GET | `/api/orders` | Get all orders | Admin |
-| GET | `/api/orders/:id` | Get order by ID | Private |
-| PUT | `/api/orders/:id/status` | Update order status | Admin |
-| PUT | `/api/orders/:id/cancel` | Cancel order | Private |
+| Method | Endpoint                 | Description         | Access  |
+| ------ | ------------------------ | ------------------- | ------- |
+| POST   | `/api/orders`            | Create order        | Private |
+| GET    | `/api/orders/my-orders`  | Get user orders     | Private |
+| GET    | `/api/orders`            | Get all orders      | Admin   |
+| GET    | `/api/orders/:id`        | Get order by ID     | Private |
+| PUT    | `/api/orders/:id/status` | Update order status | Admin   |
+| PUT    | `/api/orders/:id/cancel` | Cancel order        | Private |
 
 ## Database Schema
 
 ### User Schema
+
 ```javascript
 {
   name: String,
@@ -170,6 +181,7 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
 ```
 
 ### Product Schema
+
 ```javascript
 {
   name: String,
@@ -188,6 +200,7 @@ A RESTful API server built with Express.js, Node.js, MongoDB, and JWT authentica
 ```
 
 ### Order Schema
+
 ```javascript
 {
   user: ObjectId (ref: User),
@@ -228,6 +241,7 @@ The API uses a centralized error handling middleware that returns consistent err
 ## Development
 
 ### Code Structure
+
 ```
 server/
 ├── middleware/     # Custom middleware
@@ -249,6 +263,7 @@ server/
 ## Deployment
 
 ### Environment Variables for Production
+
 ```env
 NODE_ENV=production
 MONGODB_URI=your-production-mongodb-uri
@@ -257,6 +272,7 @@ FRONTEND_URL=your-production-frontend-url
 ```
 
 ### MongoDB Atlas Setup
+
 1. Create MongoDB Atlas account
 2. Create cluster and database
 3. Get connection string
@@ -277,5 +293,6 @@ MIT License - see LICENSE file for details
 ## Support
 
 For support and questions:
+
 - Create an issue on GitHub
 - Contact: your-email@example.com

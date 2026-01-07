@@ -5,6 +5,7 @@ This guide will help you set up and run the complete caftan e-commerce applicati
 ## Prerequisites
 
 Before starting, ensure you have:
+
 - ✅ Node.js (v16 or higher)
 - ✅ MongoDB (local installation or MongoDB Atlas account)
 - ✅ Git
@@ -12,16 +13,19 @@ Before starting, ensure you have:
 ## 🗄️ Database Setup
 
 ### Option 1: Local MongoDB
+
 1. **Install MongoDB Community Edition**
+
    - Windows: Download from [MongoDB Download Center](https://www.mongodb.com/try/download/community)
    - macOS: `brew install mongodb/brew/mongodb-community`
    - Linux: Follow [MongoDB installation guide](https://docs.mongodb.com/manual/installation/)
 
 2. **Start MongoDB service:**
+
    ```bash
    # Windows (as Administrator)
    net start MongoDB
-   
+
    # macOS/Linux
    sudo systemctl start mongod
    # or
@@ -29,6 +33,7 @@ Before starting, ensure you have:
    ```
 
 ### Option 2: MongoDB Atlas (Cloud)
+
 1. Create account at [MongoDB Atlas](https://cloud.mongodb.com/)
 2. Create a new cluster
 3. Get connection string
@@ -37,6 +42,7 @@ Before starting, ensure you have:
 ## 🛠️ Installation & Setup
 
 ### 1. Server Setup
+
 ```bash
 # Navigate to server directory
 cd server
@@ -46,13 +52,14 @@ npm install
 
 # Configure environment
 # Copy and edit the .env file with your settings
-cp .env .env.local
+# (Create `server/.env` from `server/.env.example`)
 
 # Test setup and create admin user
 npm run setup
 ```
 
 **Expected output:**
+
 ```
 ✅ Database connected successfully
 👑 Creating default admin user...
@@ -62,6 +69,7 @@ npm run setup
 ```
 
 ### 2. Frontend Setup
+
 ```bash
 # Go back to root directory
 cd ..
@@ -74,6 +82,7 @@ npm run dev
 ```
 
 ### 3. Start Backend Server
+
 ```bash
 # In a new terminal, start the backend
 cd server
@@ -83,16 +92,19 @@ npm run dev
 ## 🔧 Environment Configuration
 
 ### Server (.env)
+
 ```env
 PORT=5000
 NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/caftan-ecommerce
 JWT_SECRET=your-super-secret-jwt-key-change-this
-JWT_EXPIRE=30d
-FRONTEND_URL=http://localhost:3000
+JWT_EXPIRES_IN=7d
+# Optional (comma-separated). If not set, the API allows all origins.
+CORS_ORIGIN=http://localhost:3000
 ```
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
@@ -104,8 +116,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
    cd server
    npm run dev
    ```
-   
 2. **Start Frontend** (Terminal 2):
+
    ```bash
    npm run dev
    ```
@@ -117,16 +129,19 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ## 🧪 Testing the Integration
 
 ### 1. Test API Health
+
 ```bash
 curl http://localhost:5000/api/health
 ```
 
 ### 2. Test Admin Login
+
 - Go to: http://localhost:3000/login
 - Email: `business.aguizoul@gmail.com`
 - Password: `Admin123!`
 
 ### 3. Test User Registration
+
 - Go to: http://localhost:3000/register
 - Create a new user account
 
@@ -135,6 +150,7 @@ curl http://localhost:5000/api/health
 ⚠️ **Important:** Admin access is restricted to authorized emails only.
 
 ### Current Admin Account:
+
 - **Email:** business.aguizoul@gmail.com
 - **Password:** [Use your account password]
 - **Role:** Admin (full access)
@@ -144,22 +160,26 @@ curl http://localhost:5000/api/health
 ## 🔍 API Endpoints
 
 ### Authentication
+
 - POST `/api/auth/register` - User registration
 - POST `/api/auth/login` - User login
 - GET `/api/auth/me` - Get current user
 - PUT `/api/auth/profile` - Update profile
 
 ### Products
+
 - GET `/api/products` - Get all products
 - GET `/api/products/:id` - Get single product
 - POST `/api/products` - Create product (Admin)
 - PUT `/api/products/:id` - Update product (Admin)
 
 ### Categories
+
 - GET `/api/categories` - Get all categories
 - POST `/api/categories` - Create category (Admin)
 
 ### Orders
+
 - POST `/api/orders` - Create order
 - GET `/api/orders/my-orders` - Get user orders
 - GET `/api/orders` - Get all orders (Admin)
@@ -167,6 +187,7 @@ curl http://localhost:5000/api/health
 ## 🛠️ Development Scripts
 
 ### Frontend
+
 ```bash
 npm run dev      # Start development server
 npm run build    # Build for production
@@ -175,6 +196,7 @@ npm run lint     # Run ESLint
 ```
 
 ### Backend
+
 ```bash
 npm run dev      # Start with nodemon (auto-restart)
 npm start        # Start production server
@@ -184,7 +206,9 @@ npm run setup    # Setup database and admin user
 ## 🐛 Troubleshooting
 
 ### MongoDB Connection Issues
+
 1. **Service not running:**
+
    ```bash
    # Check if MongoDB is running
    ps aux | grep mongod  # macOS/Linux
@@ -192,6 +216,7 @@ npm run setup    # Setup database and admin user
    ```
 
 2. **Port conflicts:**
+
    - MongoDB default port: 27017
    - Change port in connection string if needed
 
@@ -199,7 +224,9 @@ npm run setup    # Setup database and admin user
    - Ensure MongoDB has write permissions to data directory
 
 ### API Connection Issues
+
 1. **CORS errors:**
+
    - Check `FRONTEND_URL` in server `.env`
    - Verify ports match
 
@@ -208,7 +235,9 @@ npm run setup    # Setup database and admin user
    - Check JWT_SECRET is set
 
 ### Frontend Issues
+
 1. **Module not found:**
+
    ```bash
    rm -rf node_modules package-lock.json
    npm install
@@ -220,24 +249,28 @@ npm run setup    # Setup database and admin user
 ## 📱 Features Available
 
 ### ✅ Authentication System
+
 - User registration and login
 - JWT token management
 - Protected routes
 - Admin role management
 
 ### ✅ Product Management
+
 - Product catalog
 - Search and filtering
 - Category organization
 - Admin CRUD operations
 
 ### ✅ User Interface
+
 - Responsive design
 - Modern UI components
 - Loading states
 - Error handling
 
 ### ✅ Admin Features
+
 - User management
 - Product management
 - Order tracking
@@ -246,10 +279,12 @@ npm run setup    # Setup database and admin user
 ## 🎯 Next Steps
 
 1. **Add sample data:**
+
    - Create categories and products via admin panel
    - Test the complete user flow
 
 2. **Customize design:**
+
    - Update colors and branding
    - Add your own product images
 
@@ -261,6 +296,7 @@ npm run setup    # Setup database and admin user
 ## 🆘 Need Help?
 
 If you encounter any issues:
+
 1. Check the troubleshooting section above
 2. Verify all environment variables are set correctly
 3. Ensure both servers are running
