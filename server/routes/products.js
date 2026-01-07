@@ -210,7 +210,7 @@ router.post('/', [auth, admin, upload.single('image')], [
     // If file uploaded, set local uploads URL
     if (req.file && req.file.filename) {
       const baseUrl = `${req.protocol}://${req.get('host')}`
-      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      const imageUrl = `${baseUrl}/api/uploads/${req.file.filename}`
       body.images = [{ url: imageUrl }]
     }
 
@@ -293,7 +293,7 @@ router.put('/:id', [auth, admin, upload.single('image')], [
     const updateData = { ...req.body }
     if (req.file && req.file.filename) {
       const baseUrl = `${req.protocol}://${req.get('host')}`
-      const imageUrl = `${baseUrl}/uploads/${req.file.filename}`
+      const imageUrl = `${baseUrl}/api/uploads/${req.file.filename}`
       updateData.images = [{ url: imageUrl }]
     }
 

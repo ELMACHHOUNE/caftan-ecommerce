@@ -28,26 +28,15 @@ const errorHandler = require('./middleware/errorHandler');
 
 // Security middleware and rate limiting removed for serverless compatibility
 
-// CORS configuration (supports multiple origins via comma-separated FRONTEND_URL)
-const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean)
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow non-browser requests or same-origin
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      return callback(null, true)
-    }
-    return callback(new Error('Not allowed by CORS'))
-  },
-  credentials: true
-}));
+// CORS: allow all origins (serverless + same-origin under Vercel)
+app.use(cors({ origin: true, credentials: true }));
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded files statically with permissive CORP for cross-origin usage (e.g., Next.js dev on :3000)
-app.use('/uploads', (req, res, next) => {
+// Serve uploaded files statically under /api/uploads (required for Vercel serverless)
+app.use('/api/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }, express.static(path.join(__dirname, 'uploads')));
